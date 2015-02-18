@@ -1,0 +1,20 @@
+# Unity stuff we can ignore...
+Library/*
+Temp/*
+Build/*
+obj/*
+
+# temp files
+*~
+*.swp
+
+# Visual Studio and Monodevelop files...
+*.booproj
+*.pidb
+*.csproj
+*.sln
+*.suo
+*.userprefs
+
+# Mac crap
+.DS_Store
