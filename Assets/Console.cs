@@ -5,12 +5,13 @@ using System.Collections.Generic;
 
 public class Console {
 	#region Fields.
-	public delegate void onChangeCallback(string logText);
-
 	/// Enable/disable the console via some setting in another in-game menu.
 	public bool enabled = true;
+
+	public ConsoleHistory history = new ConsoleHistory();
 	public string log { get; private set; }
 
+	public delegate void onChangeCallback(string logText);
 	public event onChangeCallback Changed;
 	
 	string logMessageColor = "586e75";
@@ -35,6 +36,7 @@ public class Console {
 
 	public void RunCommand(string command) {
 		OutputStringToConsole("> " + command);
+		history.AddCommandToHistory(command);
 		SilentlyRunCommand(command);
 	}
 
