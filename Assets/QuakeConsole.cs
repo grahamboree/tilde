@@ -11,6 +11,7 @@ public class QuakeConsole : MonoBehaviour {
 	public InputField commandInput;
 	public Button submitButton;
 
+	// Whether or not pressing tilde will cause the console to animate to hidden or animate to shown.
 	bool shown = false;
 
 	// Cached reference to the Console singleton instance.
@@ -40,12 +41,7 @@ public class QuakeConsole : MonoBehaviour {
 		// Show or hide the console window if the tilde key was pressed.
 		if (Input.GetKeyDown(KeyCode.BackQuote)) {
 			StopAllCoroutines();
-
-			if (shown) {
-				StartCoroutine(Hide());
-			} else {
-				StartCoroutine(Show());
-			}
+			StartCoroutine(shown ? Hide() : Show());
 			shown = !shown;
 		}
 		
