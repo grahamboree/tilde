@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -20,6 +21,8 @@ public class Console {
 	string logMessageColor = "586e75";
 	string warningMessageColor = "b58900";
 	string errorMessageColor = "dc322f";
+
+	Dictionary<string, Action> commandMap = new Dictionary<string, Action>();
 	#endregion
 	
 	#region Singleton
@@ -28,6 +31,8 @@ public class Console {
 	private Console() {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
+
+		commandMap["marco"] = () => Debug.Log("polo");
 	}
 	#endregion
 	
@@ -47,8 +52,16 @@ public class Console {
 		Changed(logContent.ToString());
 	}
 
-	public void SilentlyRunCommand(string command) {
+	public void SilentlyRunCommand(string commandString) {
 		// TODO parse and run the command here.
+		string[] splitCommand = commandString.Split(' ');
+		string commandName = splitCommand[0];
+		Action command = null;
+		if (commandMap.TryGetValue(commandName, out command)) {
+			command();
+		} else {
+			LogError("Unknown console command: " + commandName);
+		}
 	}
 
 	public void RegisterCommandCallback() {
@@ -60,16 +73,28 @@ public class Console {
 	
 	#region Private helper functions
 	void Log(string message, string stackTrace, LogType type) {
-		string outputColor = errorMessageColor;
-		if (type == LogType.Warning) {
-			outputColor = warningMessageColor;
+		switch (type) {
+		case LogType.Assert:
+		case LogType.Error:
+		case LogType.Exception:
+			LogError(message);
+			break;
+		case LogType.Warning:
+			LogWarning(message);
+			break;
+		case LogType.Log:
+			LogMessage(message);
+			break;
 		}
-		if (type == LogType.Log) {
-			outputColor = logMessageColor;
-		}
+	}
+	
+	void LogMessage(string message) { OutputFormatted(message, logMessageColor); }
+	void LogWarning(string warning) { OutputFormatted(warning, warningMessageColor); }
+	void LogError(string error)     { OutputFormatted(error,   errorMessageColor); }
 
+	void OutputFormatted(string message, string color) {
 		logContent.Append("\n<color=#");
-		logContent.Append(outputColor);
+		logContent.Append(color);
 		logContent.Append(">");
 		logContent.Append(message);
 		logContent.Append("</color>");
