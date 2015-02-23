@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
@@ -8,11 +9,13 @@ public class Console {
 	/// Enable/disable the console via some setting in another in-game menu.
 	public bool enabled = true;
 
+	// Command history.
 	public ConsoleHistory history = new ConsoleHistory();
-	public string log { get; private set; }
 
+	// Console output.
 	public delegate void onChangeCallback(string logText);
 	public event onChangeCallback Changed;
+	StringBuilder logContent = new StringBuilder();
 	
 	string logMessageColor = "586e75";
 	string warningMessageColor = "b58900";
@@ -30,14 +33,18 @@ public class Console {
 	
 	#region Public Methods.
 	public void OutputStringToConsole(string message) {
-		log += "\n" + message;
-		Changed(log);
+		logContent.Append("\n");
+		logContent.Append(message);
+		Changed(logContent.ToString());
 	}
 
 	public void RunCommand(string command) {
-		OutputStringToConsole("> " + command);
+		logContent.Append("\n> ");
+		logContent.Append(command);
+		Changed(logContent.ToString());
 		history.AddCommandToHistory(command);
 		SilentlyRunCommand(command);
+		Changed(logContent.ToString());
 	}
 
 	public void SilentlyRunCommand(string command) {
@@ -61,8 +68,12 @@ public class Console {
 			outputColor = logMessageColor;
 		}
 
-		string logMessage = "<color=#" + outputColor + ">" + message + "</color>";
-		OutputStringToConsole(logMessage);
+		logContent.Append("\n<color=#");
+		logContent.Append(outputColor);
+		logContent.Append(">");
+		logContent.Append(message);
+		logContent.Append("</color>");
+		Changed(logContent.ToString());
 	}
 	#endregion
 }
