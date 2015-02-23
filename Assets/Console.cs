@@ -79,6 +79,10 @@ public class Console {
 	public void RegisterCommand(string commandName, commandAction action) {
 		commandMap[commandName] = action;
 	}
+
+	public string Autocomplete(string partialCommand) {
+		return commandMap.Keys.FirstOrDefault(x => x.StartsWith(partialCommand));
+	}
 	#endregion
 	
 	#region Private helper functions

@@ -52,11 +52,23 @@ public class QuakeConsole : MonoBehaviour {
 				string previous = console.history.TryGetPreviousCommand();
 				if (previous != null) {
 					commandInput.text = previous;
+					commandInput.MoveTextEnd(false);
 				}
 			} else if (Input.GetKeyDown(KeyCode.DownArrow)) {
 				string next = console.history.TryGetNextCommand();
 				if (next != null) {
 					commandInput.text = next;
+					commandInput.MoveTextEnd(false);
+				}
+			} else if (Input.GetKeyDown(KeyCode.Tab)) {
+				// Autocomplete
+				string partialCommand = commandInput.text.Trim();
+				if (partialCommand != "") {
+					string result = console.Autocomplete(partialCommand);
+					if (result != null) {
+						commandInput.text = result;
+						commandInput.MoveTextEnd(false);
+					}
 				}
 			}
 		}
