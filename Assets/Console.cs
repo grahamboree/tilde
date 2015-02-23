@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ public class Console {
 	string warningMessageColor = "b58900";
 	string errorMessageColor = "dc322f";
 
-	Dictionary<string, Action> commandMap = new Dictionary<string, Action>();
+	Dictionary<string, Action<string[]>> commandMap = new Dictionary<string, Action<string[]>>();
 	#endregion
 	
 	#region Singleton
@@ -32,7 +33,8 @@ public class Console {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
 
-		commandMap["marco"] = () => Debug.Log("polo");
+		commandMap["marco"] = _ => Debug.Log("polo");
+		commandMap["first"] = args => Debug.Log(args[0]);
 	}
 	#endregion
 	
@@ -56,9 +58,9 @@ public class Console {
 		// TODO parse and run the command here.
 		string[] splitCommand = commandString.Split(' ');
 		string commandName = splitCommand[0];
-		Action command = null;
+		Action<string[]> command = null;
 		if (commandMap.TryGetValue(commandName, out command)) {
-			command();
+			command(splitCommand.Skip(1).ToArray());
 		} else {
 			LogError("Unknown console command: " + commandName);
 		}
