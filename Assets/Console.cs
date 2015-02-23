@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Reflection;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,27 +18,32 @@ public class Console {
 	// Console output.
 	public delegate void onChangeCallback(string logText);
 	public event onChangeCallback Changed;
+
+	// Registering console commands
+	public delegate string commandAction(params string[] args);
+	Dictionary<string, commandAction> commandMap = new Dictionary<string, commandAction>();
+
+	// Log scrollback.
 	StringBuilder logContent = new StringBuilder();
-	
+
 	string logMessageColor = "586e75";
 	string warningMessageColor = "b58900";
 	string errorMessageColor = "dc322f";
-
-	Dictionary<string, Action<string[]>> commandMap = new Dictionary<string, Action<string[]>>();
 	#endregion
 	
 	#region Singleton
 	public static Console instance { get { return _instance; } }
+
 	private static Console _instance = new Console();
+
 	private Console() {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
 
-		commandMap["marco"] = _ => Debug.Log("polo");
-		commandMap["first"] = args => Debug.Log(args[0]);
+		commandMap["marco"] = _ => "polo";
 	}
 	#endregion
-	
+
 	#region Public Methods.
 	public void OutputStringToConsole(string message) {
 		logContent.Append("\n");
@@ -58,18 +64,20 @@ public class Console {
 		// TODO parse and run the command here.
 		string[] splitCommand = commandString.Split(' ');
 		string commandName = splitCommand[0];
-		Action<string[]> command = null;
+		commandAction command = null;
 		if (commandMap.TryGetValue(commandName, out command)) {
-			command(splitCommand.Skip(1).ToArray());
+			try {
+				LogMessage(command(splitCommand.Skip(1).ToArray()));
+			} catch (Exception e) {
+				LogError(e.Message);
+			}
 		} else {
 			LogError("Unknown console command: " + commandName);
 		}
 	}
 
-	public void RegisterCommandCallback() {
-	}
-
-	public void RegisterCommand() {
+	public void RegisterCommand(string commandName, commandAction action) {
+		commandMap[commandName] = action;
 	}
 	#endregion
 	
@@ -90,9 +98,17 @@ public class Console {
 		}
 	}
 	
-	void LogMessage(string message) { OutputFormatted(message, logMessageColor); }
-	void LogWarning(string warning) { OutputFormatted(warning, warningMessageColor); }
-	void LogError(string error)     { OutputFormatted(error,   errorMessageColor); }
+	void LogMessage(string message) {
+		OutputFormatted(message ?? "", logMessageColor);
+	}
+
+	void LogWarning(string warning) {
+		OutputFormatted(warning ?? "", warningMessageColor);
+	}
+
+	void LogError(string error) {
+		OutputFormatted(error ?? "", errorMessageColor);
+	}
 
 	void OutputFormatted(string message, string color) {
 		logContent.Append("\n<color=#");
