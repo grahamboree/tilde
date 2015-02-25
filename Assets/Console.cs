@@ -83,6 +83,11 @@ public class Console {
 	public string Autocomplete(string partialCommand) {
 		return commandMap.Keys.FirstOrDefault(x => x.StartsWith(partialCommand));
 	}
+
+	public void SaveToFile(string filePath) {
+		var lines = Regex.Replace(logContent.ToString(), "<.*?>", string.Empty).Split('\n');
+		System.IO.File.WriteAllLines(filePath, lines);
+	}
 	#endregion
 	
 	#region Private helper functions

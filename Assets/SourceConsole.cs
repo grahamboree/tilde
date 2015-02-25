@@ -54,7 +54,7 @@ public class SourceConsole : MonoBehaviour {
 					commandInput.text = next;
 					commandInput.MoveTextEnd(false);
 				}
-			} else if (Input.GetKeyDown(KeyCode.Tab)) {
+		} else if (Input.GetKeyDown(KeyCode.Tab)) {
 				// Autocomplete
 				string partialCommand = commandInput.text.Trim();
 				if (partialCommand != "") {
@@ -65,6 +65,11 @@ public class SourceConsole : MonoBehaviour {
 					}
 				}
 			}
+		}
+
+		if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.S)) {
+			Debug.Log("Saving");
+			console.SaveToFile("test.txt");
 		}
 	}
 
