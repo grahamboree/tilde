@@ -21,7 +21,11 @@ public class Console {
 
 	// Registering console commands
 	public delegate string commandAction(params string[] args);
-	Dictionary<string, commandAction> commandMap = new Dictionary<string, commandAction>();
+	private class CommandEntry {
+		public string docs;
+		public commandAction action;
+	}
+	Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
 
 	// Log scrollback.
 	StringBuilder logContent = new StringBuilder();
@@ -40,7 +44,8 @@ public class Console {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
 
-		commandMap["marco"] = _ => "polo";
+		RegisterCommand("marco", "", _ => "polo");
+		commandMap["help"] = new CommandEntry(){docs = "", action = Help};
 	}
 	#endregion
 
@@ -64,10 +69,10 @@ public class Console {
 		// TODO parse and run the command here.
 		string[] splitCommand = commandString.Split(' ');
 		string commandName = splitCommand[0];
-		commandAction command = null;
+		CommandEntry command = null;
 		if (commandMap.TryGetValue(commandName, out command)) {
 			try {
-				LogMessage(command(splitCommand.Skip(1).ToArray()));
+				LogMessage(command.action(splitCommand.Skip(1).ToArray()));
 			} catch (Exception e) {
 				LogError(e.Message);
 			}
@@ -76,8 +81,8 @@ public class Console {
 		}
 	}
 
-	public void RegisterCommand(string commandName, commandAction action) {
-		commandMap[commandName] = action;
+	public void RegisterCommand(string commandName, string documentation, commandAction action) {
+		commandMap[commandName] = new CommandEntry(){ docs = documentation, action = action };
 	}
 
 	public string Autocomplete(string partialCommand) {
@@ -91,6 +96,24 @@ public class Console {
 	#endregion
 	
 	#region Private helper functions
+	string Help(string[] options) {
+		if (options.Length == 0) {
+			string result = "Available commands:\n";
+			string[] commands = commandMap.Keys.ToArray();
+			Array.Sort(commands);
+			return result + String.Join("\n", commands.Select(x => "\t" + x).ToArray());
+		}
+
+		CommandEntry command = null;
+		if (commandMap.TryGetValue(options[0], out command)) {
+			return command.docs;
+		}
+
+		LogError("Command not found: " + options[0]);
+		return "";
+		
+	}
+
 	void Log(string message, string stackTrace, LogType type) {
 		switch (type) {
 		case LogType.Assert:

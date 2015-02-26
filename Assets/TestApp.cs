@@ -4,10 +4,10 @@ using System.Linq;
 
 public class TestApp : MonoBehaviour {
 	void Start () {
-		Console.instance.RegisterCommand("marco", _ => "polo");
-		Console.instance.RegisterCommand("first", First);
-		Console.instance.RegisterCommand("fail", Fail);
-		Console.instance.RegisterCommand("res", SupportedResolutions);
+		Console.instance.RegisterCommand("marco", "marco help text", _ => "polo");
+		Console.instance.RegisterCommand("first", "", First);
+		Console.instance.RegisterCommand("fail", "", Fail);
+		Console.instance.RegisterCommand("res", "", SupportedResolutions);
 	}
 	
 	string First(string[] args) {
