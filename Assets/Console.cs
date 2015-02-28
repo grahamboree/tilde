@@ -7,6 +7,17 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
+[AttributeUsage(AttributeTargets.Method)]
+public class ConsoleCommand : Attribute {
+	public string commandName;
+	public string docstring;
+
+	public ConsoleCommand(string commandName, string docstring) {
+		this.commandName = commandName;
+		this.docstring = docstring;
+	}
+}
+
 public class Console {
 	#region Fields.
 	/// Enable/disable the console via some setting in another in-game menu.
@@ -21,6 +32,7 @@ public class Console {
 
 	// Registering console commands
 	public delegate string commandAction(params string[] args);
+	public delegate string simpleCommandAction();
 	private class CommandEntry {
 		public string docs;
 		public commandAction action;
@@ -44,7 +56,7 @@ public class Console {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
 
-		RegisterCommand("marco", "", _ => "polo");
+		FindCommands();
 		commandMap["help"] = new CommandEntry(){docs = "", action = Help};
 	}
 	#endregion
@@ -149,6 +161,48 @@ public class Console {
 		logContent.Append(message);
 		logContent.Append("</color>");
 		Changed(logContent.ToString());
+	}
+
+
+	void FindCommands() {
+		foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+			foreach(Type type in assembly.GetTypes()) {
+				// FIXME add support for non-static methods (FindObjectByType?)
+				foreach(MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+					ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
+					if (attrs.Length == 0)
+						continue;
+
+					commandAction action = Delegate.CreateDelegate(typeof(commandAction), method, false) as commandAction;
+					//CommandAttribute.Callback cb = Delegate.CreateDelegate(typeof(CommandAttribute.Callback), method, false) as CommandAttribute.Callback;
+					if (action == null) {
+						// TODO allow for methods with no arguments.
+						simpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(simpleCommandAction), method, false) as simpleCommandAction;
+						if (simpleAction != null) {
+							action = _ => simpleAction();
+						}
+					}
+					
+					if (action == null) {
+						Debug.LogError(string.Format(
+							"Method {0}.{1} is the wrong type.  It must take either no argumets, or a single array " +
+							"of strings, and it must return a string.", type, method.Name));
+						continue;
+					}
+					
+					// try with a bare action
+					foreach(ConsoleCommand cmd in attrs) {
+						if (string.IsNullOrEmpty(cmd.commandName)) {
+							Debug.LogError(string.Format("You must give method {0}.{1} a valid command name.", type, method.Name));
+							continue;
+						}
+
+						RegisterCommand(cmd.commandName, cmd.docstring ?? "", action);
+					}
+				}
+			}
+		}
+
 	}
 	#endregion
 }

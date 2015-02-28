@@ -81,7 +81,8 @@ public class SourceConsole : MonoBehaviour {
 	#region UI Events.
 	public void UpdateSubmitButton() {
 		string strippedText = Regex.Replace(commandInput.text, @"\s", "");
-		submitButton.interactable = (strippedText != "");
+		//submitButton.interactable = (strippedText != "");
+		submitButton.gameObject.SetActive((strippedText != ""));
 	}
 	
 	public void SubmitText() {

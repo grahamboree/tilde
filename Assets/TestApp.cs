@@ -24,4 +24,9 @@ public class TestApp : MonoBehaviour {
 	string SupportedResolutions(string[] args) {
 		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
 	}
+
+	[ConsoleCommand("at", "at docs")]
+	public static string atTest(string[] options) {
+		return "at body"; 
+	}
 }
