@@ -29,4 +29,14 @@ public class TestApp : MonoBehaviour {
 	public static string atTest(string[] options) {
 		return "at body"; 
 	}
+
+	[ConsoleCommand("notmarco", "")]
+	public static string Marco() {
+		return "polo";
+	}
+
+	[ConsoleCommand]
+	public static string Butts() {
+		return "butts";
+	}
 }

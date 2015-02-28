@@ -12,6 +12,13 @@ public class ConsoleCommand : Attribute {
 	public string commandName;
 	public string docstring;
 
+	public ConsoleCommand() {
+	}
+
+	public ConsoleCommand(string docstring) {
+		this.docstring = docstring;
+	}
+
 	public ConsoleCommand(string commandName, string docstring) {
 		this.commandName = commandName;
 		this.docstring = docstring;
@@ -163,20 +170,16 @@ public class Console {
 		Changed(logContent.ToString());
 	}
 
-
 	void FindCommands() {
 		foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
 			foreach(Type type in assembly.GetTypes()) {
-				// FIXME add support for non-static methods (FindObjectByType?)
 				foreach(MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
 					ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
 					if (attrs.Length == 0)
 						continue;
 
 					commandAction action = Delegate.CreateDelegate(typeof(commandAction), method, false) as commandAction;
-					//CommandAttribute.Callback cb = Delegate.CreateDelegate(typeof(CommandAttribute.Callback), method, false) as CommandAttribute.Callback;
 					if (action == null) {
-						// TODO allow for methods with no arguments.
 						simpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(simpleCommandAction), method, false) as simpleCommandAction;
 						if (simpleAction != null) {
 							action = _ => simpleAction();
@@ -189,20 +192,18 @@ public class Console {
 							"of strings, and it must return a string.", type, method.Name));
 						continue;
 					}
-					
-					// try with a bare action
+
 					foreach(ConsoleCommand cmd in attrs) {
 						if (string.IsNullOrEmpty(cmd.commandName)) {
-							Debug.LogError(string.Format("You must give method {0}.{1} a valid command name.", type, method.Name));
-							continue;
+							cmd.commandName = method.Name;
 						}
 
+						//RegisterCommand(cmd.commandName, cmd.docstring ?? "", action);
 						RegisterCommand(cmd.commandName, cmd.docstring ?? "", action);
 					}
 				}
 			}
 		}
-
 	}
 	#endregion
 }
