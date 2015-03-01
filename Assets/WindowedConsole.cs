@@ -3,12 +3,11 @@ using UnityEngine.UI;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-public class SourceConsole : MonoBehaviour {
+public class WindowedConsole : MonoBehaviour {
 	public GameObject consoleWindow;
 	public Text consoleText;
 	public Scrollbar scrollbar;
 	public InputField commandInput;
-	public Button submitButton;
 
 	// Cached reference to the Console singleton instance.
 	Console console;
