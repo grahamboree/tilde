@@ -9,7 +9,6 @@ public class QuakeConsole : MonoBehaviour {
 	public Text consoleText;
 	public Scrollbar scrollbar;
 	public InputField commandInput;
-	public Button submitButton;
 
 	// Whether or not pressing tilde will cause the console to animate to hidden or animate to shown.
 	bool shown = false;
@@ -27,17 +26,9 @@ public class QuakeConsole : MonoBehaviour {
 	void Awake() {
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
-		
-		if (Visible) {
-			UpdateSubmitButton();
-		}
 	}
 	
 	void Update() {
-		if (!console.enabled) {
-			return;
-		}
-		
 		// Show or hide the console window if the tilde key was pressed.
 		if (Input.GetKeyDown(KeyCode.BackQuote)) {
 			StopAllCoroutines();
@@ -115,11 +106,6 @@ public class QuakeConsole : MonoBehaviour {
 	#endregion
 
 	#region UI Events.
-	public void UpdateSubmitButton() {
-		string strippedText = Regex.Replace(commandInput.text, @"\s", "");
-		submitButton.interactable = (strippedText != "");
-	}
-	
 	public void SubmitText() {
 		// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
 		// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 

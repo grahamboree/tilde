@@ -23,17 +23,9 @@ public class SourceConsole : MonoBehaviour {
 	void Awake() {
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
-
-		if (Visible) {
-			UpdateSubmitButton();
-		}
 	}
 	
 	void Update() {
-		if (!console.enabled) {
-			return;
-		}
-
 		// Show or hide the console window if the tilde key was pressed.
 		if (Input.GetKeyDown(KeyCode.BackQuote)) {
 			consoleWindow.gameObject.SetActive(!consoleWindow.activeSelf);
@@ -68,7 +60,6 @@ public class SourceConsole : MonoBehaviour {
 		}
 
 		if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.S)) {
-			Debug.Log("Saving");
 			console.SaveToFile("test.txt");
 		}
 	}
@@ -79,12 +70,6 @@ public class SourceConsole : MonoBehaviour {
 	#endregion
 	
 	#region UI Events.
-	public void UpdateSubmitButton() {
-		string strippedText = Regex.Replace(commandInput.text, @"\s", "");
-		//submitButton.interactable = (strippedText != "");
-		submitButton.gameObject.SetActive((strippedText != ""));
-	}
-	
 	public void SubmitText() {
 		// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
 		// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 

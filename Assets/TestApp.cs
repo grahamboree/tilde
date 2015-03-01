@@ -4,30 +4,29 @@ using System.Linq;
 
 public class TestApp : MonoBehaviour {
 	void Start () {
-		Console.instance.RegisterCommand("marco", "marco help text", _ => "polo");
-		Console.instance.RegisterCommand("first", "", First);
-		Console.instance.RegisterCommand("fail", "", Fail);
-		Console.instance.RegisterCommand("res", "", SupportedResolutions);
 	}
-	
-	string First(string[] args) {
+
+	[ConsoleCommand("marco help text")]
+	public static string marco() {
+		return "polo";
+	}
+
+	[ConsoleCommand]
+	public static string first(string[] args) {
 		if (args.Length == 0) {
 			throw new System.Exception("At least one parameter must be specified to First");
 		}
 		return args[0];
 	}
-	
-	string Fail(string[] args) {
-		throw new System.Exception("fail");
-	}
 
-	string SupportedResolutions(string[] args) {
-		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
+	[ConsoleCommand]
+	public static void fail() {
+		throw new System.Exception("fail");
 	}
 
 	[ConsoleCommand("at", "at docs")]
 	public static string atTest(string[] options) {
-		return "at body"; 
+		return "at body";
 	}
 
 	[ConsoleCommand("notmarco", "")]
@@ -38,5 +37,13 @@ public class TestApp : MonoBehaviour {
 	[ConsoleCommand]
 	public static string Butts() {
 		return "butts";
+	}
+
+	[ConsoleCommand]
+	public static string Warning() {
+		Debug.Log("This is what a log message from Unity looks like");
+		Debug.LogWarning("This is what a warning from Unity looks like");
+		Debug.LogError("This is what an error from Unity looks like");
+		return "";
 	}
 }

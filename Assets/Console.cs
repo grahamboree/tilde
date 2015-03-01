@@ -27,9 +27,6 @@ public class ConsoleCommand : Attribute {
 
 public class Console {
 	#region Fields.
-	/// Enable/disable the console via some setting in another in-game menu.
-	public bool enabled = true;
-
 	// Command history.
 	public ConsoleHistory history = new ConsoleHistory();
 
@@ -40,6 +37,8 @@ public class Console {
 	// Registering console commands
 	public delegate string commandAction(params string[] args);
 	public delegate string simpleCommandAction();
+	public delegate void silentCommandAction(string[] args);
+	public delegate void simpleSilentCommandAction();
 	private class CommandEntry {
 		public string docs;
 		public commandAction action;
@@ -62,9 +61,9 @@ public class Console {
 	private Console() {
 		// Listen for Debug.Log calls.
 		Application.RegisterLogCallback(Log);
-
+		commandMap["help"] = new CommandEntry(){docs = "View available commands as well as their documentation.", action = Help};
+		commandMap["res"] = new CommandEntry(){docs = "List supported fullscreen resolutions on this device", action = _ => SupportedResolutions()};
 		FindCommands();
-		commandMap["help"] = new CommandEntry(){docs = "", action = Help};
 	}
 	#endregion
 
@@ -85,7 +84,6 @@ public class Console {
 	}
 
 	public void SilentlyRunCommand(string commandString) {
-		// TODO parse and run the command here.
 		string[] splitCommand = commandString.Split(' ');
 		string commandName = splitCommand[0];
 		CommandEntry command = null;
@@ -100,10 +98,6 @@ public class Console {
 		}
 	}
 
-	public void RegisterCommand(string commandName, string documentation, commandAction action) {
-		commandMap[commandName] = new CommandEntry(){ docs = documentation, action = action };
-	}
-
 	public string Autocomplete(string partialCommand) {
 		return commandMap.Keys.FirstOrDefault(x => x.StartsWith(partialCommand));
 	}
@@ -113,8 +107,8 @@ public class Console {
 		System.IO.File.WriteAllLines(filePath, lines);
 	}
 	#endregion
-	
-	#region Private helper functions
+
+	#region Built-in commands
 	string Help(string[] options) {
 		if (options.Length == 0) {
 			string result = "Available commands:\n";
@@ -122,7 +116,7 @@ public class Console {
 			Array.Sort(commands);
 			return result + String.Join("\n", commands.Select(x => "\t" + x).ToArray());
 		}
-
+		
 		CommandEntry command = null;
 		if (commandMap.TryGetValue(options[0], out command)) {
 			return command.docs;
@@ -130,9 +124,14 @@ public class Console {
 
 		LogError("Command not found: " + options[0]);
 		return "";
-		
 	}
-
+	
+	string SupportedResolutions() {
+		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
+	}
+	#endregion
+	
+	#region Private helper functions
 	void Log(string message, string stackTrace, LogType type) {
 		switch (type) {
 		case LogType.Assert:
@@ -183,13 +182,21 @@ public class Console {
 						simpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(simpleCommandAction), method, false) as simpleCommandAction;
 						if (simpleAction != null) {
 							action = _ => simpleAction();
+						} else {
+							silentCommandAction silentAction = Delegate.CreateDelegate(typeof(silentCommandAction),  method, false) as silentCommandAction;
+							if (silentAction != null) {
+								action = args => { silentAction(args); return ""; };
+							} else {
+								simpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(simpleSilentCommandAction),  method, false) as simpleSilentCommandAction;
+								action = args => { simpleSilentAction(); return ""; };
+							}
 						}
 					}
 					
 					if (action == null) {
 						Debug.LogError(string.Format(
-							"Method {0}.{1} is the wrong type.  It must take either no argumets, or a single array " +
-							"of strings, and it must return a string.", type, method.Name));
+							"Method {0}.{1} is the wrong type.  It must take either no argumets, or just an array " + 
+							"of strings, and its return type must be string or void.", type, method.Name));
 						continue;
 					}
 
@@ -198,8 +205,7 @@ public class Console {
 							cmd.commandName = method.Name;
 						}
 
-						//RegisterCommand(cmd.commandName, cmd.docstring ?? "", action);
-						RegisterCommand(cmd.commandName, cmd.docstring ?? "", action);
+						commandMap[cmd.commandName] = new CommandEntry(){docs = cmd.docstring ?? "", action = action };
 					}
 				}
 			}
