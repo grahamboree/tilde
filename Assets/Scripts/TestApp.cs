@@ -24,7 +24,7 @@ public class TestApp : MonoBehaviour {
 		throw new System.Exception("fail");
 	}
 
-	[ConsoleCommand("at", "at docs")]
+	[ConsoleCommand("at", "This is a really long docstring that hopefully will overflow but not overflow the help screen and it will just put ellipsis and everything will look okay and be fine.")]
 	public static string atTest(string[] options) {
 		return "at body";
 	}
