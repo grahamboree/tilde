@@ -11,14 +11,10 @@ using System.Collections.Generic;
 public class ConsoleCommand : Attribute {
 	public string commandName;
 	public string docstring;
-
-	public ConsoleCommand(string docstring = null) {
-		this.docstring = docstring;
-	}
-
-	public ConsoleCommand(string commandName, string docstring) {
-		this.commandName = commandName;
-		this.docstring = docstring;
+	
+	public ConsoleCommand(string name = null, string docs = null) {
+		this.commandName = name;
+		this.docstring = docs;
 	}
 }
 
