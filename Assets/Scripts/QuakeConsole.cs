@@ -26,6 +26,7 @@ public class QuakeConsole : MonoBehaviour {
 	void Awake() {
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
+		UpdateLogContent(console.Content);
 	}
 	
 	void Update() {
@@ -34,6 +35,11 @@ public class QuakeConsole : MonoBehaviour {
 			StopAllCoroutines();
 			StartCoroutine(shown ? Hide() : Show());
 			shown = !shown;
+			if (shown) {
+				commandInput.Select();
+			} else {
+				commandInput.text = commandInput.text.TrimEnd('`');
+			}
 		}
 		
 		if (Visible && commandInput.isFocused) {
