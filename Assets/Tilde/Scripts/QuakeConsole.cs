@@ -70,6 +70,10 @@ public class QuakeConsole : MonoBehaviour {
 				}
 			}
 		}
+		
+		if (Visible && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.S)) {
+			console.SaveToFile("tilde_console_dump.txt");
+		}
 	}
 	
 	void OnDestroy() {
