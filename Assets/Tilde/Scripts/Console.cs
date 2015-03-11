@@ -158,9 +158,7 @@ To view available commands, type 'help'");
 					result += "...";
 				}
 			}
-			result += "\n" + new string(' ', 80) + "|";
-			//return result + String.Join("\n", commands.Select(x => "\t" + x).ToArray());
-			return result;// + String.Join("\n", commandMap.Select(x => "\t" + x.Key + "\t" + new string(x.Value.docs.Take(60).ToArray())).ToArray());
+			return result;
 		}
 		
 		CommandEntry command = null;
