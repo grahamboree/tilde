@@ -65,8 +65,16 @@ public class Console {
 		// Listen for Debug.Log calls.
 		Application.logMessageReceived += Log;
 		commandMap["help"] = new CommandEntry(){docs = "View available commands as well as their documentation.", action = Help};
-		commandMap["res"] = new CommandEntry(){docs = "List supported fullscreen resolutions on this device", action = _ => SupportedResolutions()};
 		FindCommands();
+		logContent.Append(@"   _   _   __         ___       __             _   _    
+ /' \/' \ /\ \__  __ /\_ \     /\ \          /' \/' \   
+/\_/\__// \ \ ,_\/\_\\//\ \    \_\ \     __ /\_/\__//   
+\//\/__/   \ \ \/\/\ \ \ \ \   /'_` \  /'__`\//\/__/    
+            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
+             \ \__\\ \_\/\____\ \___,_\ \____\          
+              \/__/ \/_/\/____/\/__,_ /\/____/          
+                                                        
+To view possible commands, type 'help'");
 	}
 	#endregion
 
@@ -166,8 +174,9 @@ public class Console {
 		LogError("Command not found: " + options[0]);
 		return "";
 	}
-	
-	string SupportedResolutions() {
+
+	[ConsoleCommand("res", "List supported fullscreen resolutions on this device")]
+	public static string SupportedResolutions() {
 		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
 	}
 	#endregion
