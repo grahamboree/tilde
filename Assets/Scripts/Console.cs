@@ -171,11 +171,6 @@ To view available commands, type 'help'");
 		LogError("Command not found: " + options[0]);
 		return "";
 	}
-
-	[ConsoleCommand("res", "List supported fullscreen resolutions on this device")]
-	public static string SupportedResolutions() {
-		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
-	}
 	#endregion
 	
 	#region Private helper functions
