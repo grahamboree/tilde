@@ -78,13 +78,6 @@ public class QuakeConsole : MonoBehaviour {
 	#endregion
 
 	#region Coroutines
-	void SetConsoleY(float y) {
-		RectTransform consoleWindowRectTransform = (consoleWindow.transform as RectTransform);
-		Vector2 pos = consoleWindowRectTransform.anchoredPosition;
-		pos.y = y;
-		consoleWindowRectTransform.anchoredPosition = pos;
-	}
-
 	IEnumerator Show() {
 		consoleWindow.SetActive(true);
 		float startTime = Time.time;
@@ -109,6 +102,15 @@ public class QuakeConsole : MonoBehaviour {
 		SetConsoleY(250);
 
 		consoleWindow.SetActive(false);
+	}
+	#endregion
+
+	#region Private methods.
+	void SetConsoleY(float y) {
+		RectTransform consoleWindowRectTransform = (consoleWindow.transform as RectTransform);
+		Vector2 pos = consoleWindowRectTransform.anchoredPosition;
+		pos.y = y;
+		consoleWindowRectTransform.anchoredPosition = pos;
 	}
 	#endregion
 
