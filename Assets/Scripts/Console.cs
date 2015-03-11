@@ -66,15 +66,16 @@ public class Console {
 		Application.logMessageReceived += Log;
 		commandMap["help"] = new CommandEntry(){docs = "View available commands as well as their documentation.", action = Help};
 		FindCommands();
-		logContent.Append(@"   _   _   __         ___       __             _   _    
- /' \/' \ /\ \__  __ /\_ \     /\ \          /' \/' \   
-/\_/\__// \ \ ,_\/\_\\//\ \    \_\ \     __ /\_/\__//   
-\//\/__/   \ \ \/\/\ \ \ \ \   /'_` \  /'__`\//\/__/    
+		logContent.Append(@"
+  ___  _   __         ___       __            ___  _    
+ /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
+/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
+\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
             \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
              \ \__\\ \_\/\____\ \___,_\ \____\          
               \/__/ \/_/\/____/\/__,_ /\/____/          
                                                         
-To view possible commands, type 'help'");
+To view available commands, type 'help'");
 	}
 	#endregion
 
