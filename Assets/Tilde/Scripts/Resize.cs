@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 
+namespace Tilde { 
 public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
 	public Vector2 minSize = new Vector2(100, 100);
 	public RectTransform panelRectTransform;
@@ -30,4 +31,4 @@ public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
 		panelRectTransform.sizeDelta = sizeDelta;
 	}
 }
-
+}

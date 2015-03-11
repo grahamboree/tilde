@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Linq;
 
+namespace Tilde {
 public static class BuiltinCommands {
 	[ConsoleCommand(name:"res", docs:"List supported fullscreen resolutions on this device")]
 	public static string SupportedResolutions() {
@@ -15,4 +16,5 @@ public static class BuiltinCommands {
 		}
 		Application.LoadLevel(options[0]);
 	}
+}
 }

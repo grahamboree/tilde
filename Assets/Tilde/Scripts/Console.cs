@@ -7,6 +7,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
+namespace Tilde {
+
 [AttributeUsage(AttributeTargets.Method)]
 public class ConsoleCommand : Attribute {
 	public string commandName;
@@ -252,4 +254,5 @@ To view available commands, type 'help'");
 		}
 	}
 	#endregion
+}
 }

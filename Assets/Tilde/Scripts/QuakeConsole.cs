@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace Tilde {
 public class QuakeConsole : MonoBehaviour {
 	public GameObject consoleWindow;
 	public Text consoleText;
@@ -133,4 +134,5 @@ public class QuakeConsole : MonoBehaviour {
 		consoleText.text = log;
 	}
 	#endregion
+}
 }

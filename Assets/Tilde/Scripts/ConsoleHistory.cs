@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+namespace Tilde {
 public class ConsoleHistory {
-	
 	private List<string> history = new List<string>();
 	private int currentHistoryOffset = 0;
 
@@ -31,4 +31,5 @@ public class ConsoleHistory {
 		history.Add(commandString);
 		currentHistoryOffset = 0;
 	}
+}
 }

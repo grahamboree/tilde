@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
+namespace Tilde {
 public class WindowedConsole : MonoBehaviour {
 	public GameObject consoleWindow;
 	public Text consoleText;
@@ -90,4 +91,5 @@ public class WindowedConsole : MonoBehaviour {
 		consoleText.text = log;
 	}
 	#endregion
+}
 }

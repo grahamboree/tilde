@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 
+namespace Tilde {
 public class Drag : MonoBehaviour, IPointerDownHandler, IDragHandler {
 	public RectTransform panelRectTransform;
 	private Vector2 originalLocalPointerPosition;
@@ -29,4 +30,5 @@ public class Drag : MonoBehaviour, IPointerDownHandler, IDragHandler {
 			panelRectTransform.localPosition = originalPanelLocalPosition + offsetToOriginal;
 		}
 	}
+}
 }
