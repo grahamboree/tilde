@@ -6,7 +6,6 @@ using System.Collections;
 public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
 	public Vector2 minSize = new Vector2(100, 100);
 	public RectTransform panelRectTransform;
-	
 	private Vector2 originalLocalPointerPosition;
 	private Vector2 originalSizeDelta;
 	
@@ -16,8 +15,9 @@ public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
 	}
 	
 	public void OnDrag(PointerEventData data) {
-		if (panelRectTransform == null)
+		if (panelRectTransform == null) {
 			return;
+		}
 		
 		Vector2 localPointerPosition;
 		RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRectTransform, data.position, data.pressEventCamera, out localPointerPosition);
