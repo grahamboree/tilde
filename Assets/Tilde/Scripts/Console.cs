@@ -43,6 +43,7 @@ public class Console {
 	}
 
 	private Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
+	public Dictionary<KeyCode, string> boundCommands = new Dictionary<KeyCode, string>();
 
 	// Log scrollback.
 	private StringBuilder logContent = new StringBuilder();
@@ -51,9 +52,9 @@ public class Console {
 	public string Content { get { return logContent.ToString(); } }
 
 	// Log styling.
-	private string logMessageColor = "586e75";
-	private string warningMessageColor = "b58900";
-	private string errorMessageColor = "dc322f";
+	private const string logMessageColor = "586e75";
+	private const string warningMessageColor = "b58900";
+	private const string errorMessageColor = "dc322f";
 	#endregion
 	
 	#region Singleton

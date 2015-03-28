@@ -62,6 +62,15 @@ public class WindowedConsole : MonoBehaviour {
 		if (Visible && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.S)) {
 			console.SaveToFile("tilde_console_dump.txt");
 		}
+
+		// Run any bound commands triggered this frame.
+		if (!commandInput.isFocused) {
+			foreach (var boundCommand in console.boundCommands) {
+				if (Input.GetKeyDown(boundCommand.Key)) {
+					console.RunCommand(boundCommand.Value);
+				}
+			}
+		}
 	}
 
 	void OnDestroy() {
