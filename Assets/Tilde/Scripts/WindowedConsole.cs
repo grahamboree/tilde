@@ -23,6 +23,7 @@ public class WindowedConsole : MonoBehaviour {
 	void Awake() {
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
+		UpdateLogContent(console.Content);
 	}
 	
 	void Update() {
