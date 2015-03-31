@@ -29,7 +29,13 @@ public class WindowedConsole : MonoBehaviour {
 	void Update() {
 		// Show or hide the console window if the tilde key was pressed.
 		if (Input.GetKeyDown(KeyCode.BackQuote)) {
-			consoleWindow.gameObject.SetActive(!consoleWindow.activeSelf);
+			bool visible = !consoleWindow.activeSelf;
+			consoleWindow.gameObject.SetActive(visible);
+			if (visible) {
+				commandInput.ActivateInputField();
+				commandInput.Select();
+			}
+			commandInput.text = commandInput.text.TrimEnd('`');
 		}
 		
 		if (Visible && commandInput.isFocused) {

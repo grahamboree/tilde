@@ -36,11 +36,7 @@ public class QuakeConsole : MonoBehaviour {
 			StopAllCoroutines();
 			StartCoroutine(shown ? Hide() : Show());
 			shown = !shown;
-			if (shown) {
-				commandInput.Select();
-			} else {
-				commandInput.text = commandInput.text.TrimEnd('`');
-			}
+			commandInput.text = commandInput.text.TrimEnd('`');
 		}
 		
 		if (Visible && commandInput.isFocused) {
@@ -93,6 +89,8 @@ public class QuakeConsole : MonoBehaviour {
 	#region Coroutines
 	IEnumerator Show() {
 		consoleWindow.SetActive(true);
+		commandInput.ActivateInputField();
+		commandInput.Select();
 		float startTime = Time.time;
 		float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
 		while (currentPosition > -246) {
