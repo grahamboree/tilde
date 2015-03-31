@@ -124,7 +124,11 @@ To view available commands, type 'help'");
 		}
 		return "";
 	}
-
+	
+	/// <summary>
+	/// Attempt to autocomplete a partial command.
+	/// </summary>
+	/// <param name="partialCommand">The full command name if a match is found.</param>
 	public string Autocomplete(string partialCommand) {
 		return commandMap.Keys.FirstOrDefault(x => x.StartsWith(partialCommand));
 	}
