@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace Tilde {
-public class QuakeConsole : MonoBehaviour {
+public class DrawerConsole : MonoBehaviour {
 	public float size = 500.0f;
 	public GameObject consoleWindow;
 	public Text consoleText;
