@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace Tilde {
 public class QuakeConsole : MonoBehaviour {
+	public float size = 500.0f;
 	public GameObject consoleWindow;
 	public Text consoleText;
 	public Scrollbar scrollbar;
@@ -25,6 +26,9 @@ public class QuakeConsole : MonoBehaviour {
 	
 	#region MonoBehaviour
 	void Awake() {
+		(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
+		SetConsoleY(size);
+	
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
 		UpdateLogContent(console.Content);
@@ -93,24 +97,24 @@ public class QuakeConsole : MonoBehaviour {
 		commandInput.Select();
 		float startTime = Time.time;
 		float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
-		while (currentPosition > -246) {
-			currentPosition = Mathf.Lerp(currentPosition, -247, Time.time - startTime);
+		while (currentPosition > -size + 4) {
+			currentPosition = Mathf.Lerp(currentPosition, -size, Time.time - startTime);
 			SetConsoleY(currentPosition);
 			yield return null;
 		}
-		SetConsoleY(-247);
+		SetConsoleY(-size);
 	}
 
 	IEnumerator Hide() {
 		float startTime = Time.time;
 		float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
-		while (currentPosition < 249) {
-			currentPosition = Mathf.Lerp(currentPosition, 250, Time.time - startTime);
+		while (currentPosition < size - 4) {
+			currentPosition = Mathf.Lerp(currentPosition, size, Time.time - startTime);
 
 			SetConsoleY(currentPosition);
 			yield return null;
 		}
-		SetConsoleY(250);
+		SetConsoleY(size);
 
 		consoleWindow.SetActive(false);
 	}
