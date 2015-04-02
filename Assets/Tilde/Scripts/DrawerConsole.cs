@@ -7,7 +7,10 @@ using System.Collections.Generic;
 namespace Tilde {
 public class DrawerConsole : MonoBehaviour {
 	#region Fields.
+	// Config.
 	public float size = 500.0f;
+
+	// GUI elements.
 	public GameObject consoleWindow;
 	public Text consoleText;
 	public Scrollbar scrollbar;
@@ -19,7 +22,7 @@ public class DrawerConsole : MonoBehaviour {
 	// Cached reference to the Console singleton instance.
 	Console console;
 	
-	public bool Visible {
+	bool Visible {
 		get {
 			return consoleWindow != null && consoleWindow.gameObject.activeSelf;
 		}

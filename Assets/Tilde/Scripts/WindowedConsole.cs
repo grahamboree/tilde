@@ -13,7 +13,7 @@ public class WindowedConsole : MonoBehaviour {
 	// Cached reference to the Console singleton instance.
 	Console console;
 
-	public bool Visible {
+	bool Visible {
 		get {
 			return consoleWindow != null && consoleWindow.gameObject.activeSelf;
 		}
