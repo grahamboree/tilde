@@ -22,6 +22,17 @@ public class ConsoleCommand : Attribute {
 
 public class Console {
 	#region Fields.
+		const string startingText = @"
+  ___  _   __         ___       __            ___  _    
+ /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
+/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
+\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
+            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
+             \ \__\\ \_\/\____\ \___,_\ \____\          
+              \/__/ \/_/\/____/\/__,_ /\/____/          
+                                                        
+To view available commands, type 'help'";
+
 	/// The complete console command execution history.
 	public ConsoleHistory history = new ConsoleHistory();
 
@@ -65,16 +76,7 @@ public class Console {
 		Application.logMessageReceived += Log;
 		commandMap["help"] = new CommandEntry(){docs = "View available commands as well as their documentation.", action = Help};
 		FindCommands();
-		logContent.Append(@"
-  ___  _   __         ___       __            ___  _    
- /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
-/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
-\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
-            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
-             \ \__\\ \_\/\____\ \___,_\ \____\          
-              \/__/ \/_/\/____/\/__,_ /\/____/          
-                                                        
-To view available commands, type 'help'");
+		logContent.Append(startingText);
 	}
 	#endregion
 
