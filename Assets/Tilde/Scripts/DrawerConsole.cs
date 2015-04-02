@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace Tilde {
 public class DrawerConsole : MonoBehaviour {
+	#region Fields.
 	public float size = 500.0f;
 	public GameObject consoleWindow;
 	public Text consoleText;
@@ -23,6 +24,7 @@ public class DrawerConsole : MonoBehaviour {
 			return consoleWindow != null && consoleWindow.gameObject.activeSelf;
 		}
 	}
+	#endregion
 	
 	#region MonoBehaviour
 	void Awake() {

@@ -9,6 +9,11 @@ public static class BuiltinCommands {
 		return string.Join("\n", Screen.resolutions.Select(x => x.width + "x" + x.height).ToArray());
 	}
 
+	[ConsoleCommand(docs: "Exit the game.")]
+	public static void exit() {
+		Application.Quit();
+	}
+
 	[ConsoleCommand(docs: "Load a scene with the given name.")]
 	public static void loadLevel(string[] options) {
 		if (options.Length == 0) {
