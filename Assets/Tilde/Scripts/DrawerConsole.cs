@@ -8,7 +8,7 @@ namespace Tilde {
 public class DrawerConsole : MonoBehaviour {
 	#region Fields.
 	// Config.
-	public float size = 500.0f;
+	public const float height = 500.0f;
 
 	// GUI elements.
 	public GameObject consoleWindow;
@@ -31,8 +31,8 @@ public class DrawerConsole : MonoBehaviour {
 	
 	#region MonoBehaviour
 	void Awake() {
-		(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
-		SetConsoleY(size);
+		(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+		SetConsoleY(height);
 	
 		console = Console.instance;
 		console.Changed += UpdateLogContent;
@@ -102,24 +102,24 @@ public class DrawerConsole : MonoBehaviour {
 		commandInput.Select();
 		float startTime = Time.time;
 		float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
-		while (currentPosition > -size + 4) {
-			currentPosition = Mathf.Lerp(currentPosition, -size, Time.time - startTime);
+		while (currentPosition > -height + 4) {
+			currentPosition = Mathf.Lerp(currentPosition, -height, Time.time - startTime);
 			SetConsoleY(currentPosition);
 			yield return null;
 		}
-		SetConsoleY(-size);
+		SetConsoleY(-height);
 	}
 
 	IEnumerator Hide() {
 		float startTime = Time.time;
 		float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
-		while (currentPosition < size - 4) {
-			currentPosition = Mathf.Lerp(currentPosition, size, Time.time - startTime);
+		while (currentPosition < height - 4) {
+			currentPosition = Mathf.Lerp(currentPosition, height, Time.time - startTime);
 
 			SetConsoleY(currentPosition);
 			yield return null;
 		}
-		SetConsoleY(size);
+		SetConsoleY(height);
 
 		consoleWindow.SetActive(false);
 	}
