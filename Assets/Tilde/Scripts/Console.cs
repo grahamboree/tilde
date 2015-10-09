@@ -13,7 +13,7 @@ namespace Tilde {
 public class ConsoleCommand : Attribute {
 	public string commandName;
 	public string docstring;
-	
+
 	public ConsoleCommand(string name = null, string docs = null) {
 		this.commandName = name;
 		this.docstring = docs;
@@ -22,7 +22,7 @@ public class ConsoleCommand : Attribute {
 
 public class Console {
 	#region Fields.
-		const string startingText = @"
+	const string startingText = @"
   ___  _   __         ___       __            ___  _    
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
 /\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
@@ -67,14 +67,14 @@ To view available commands, type 'help'";
 	private const string warningMessageColor = "b58900";
 	private const string errorMessageColor = "dc322f";
 	#endregion
-	
+
 	#region Singleton
 	public static Console instance { get { return _instance; } }
 	private static Console _instance = new Console();
 	private Console() {
 		// Listen for Debug.Log calls.
 		Application.logMessageReceived += Log;
-		commandMap["help"] = new CommandEntry(){docs = "View available commands as well as their documentation.", action = Help};
+		commandMap["help"] = new CommandEntry() { docs = "View available commands as well as their documentation.", action = Help };
 		FindCommands();
 		logContent.Append(startingText);
 	}
@@ -126,7 +126,7 @@ To view available commands, type 'help'";
 		}
 		return "";
 	}
-	
+
 	/// <summary>
 	/// Attempt to autocomplete a partial command.
 	/// </summary>
@@ -143,43 +143,62 @@ To view available commands, type 'help'";
 
 	#region Built-in commands
 	string Help(string[] options) {
+		const int LINE_WIDTH = 80;
+		const int COMMAND_INDENT = 2;
+		const int COMMAND_DOCSTRING_PADDING = 3;
+
+		var helpText = new StringBuilder();
 		if (options.Length == 0) {
-			string result = "Available commands:\n";
-			string[] commands = commandMap.Keys.ToArray();
-			Array.Sort(commands);
-			int maxCommandLength = commands.Select(x => x.Length).Max();
-			foreach (string c in commands) {
-				result += "\n  " + c + new string(' ', (maxCommandLength - c.Length) + 3);
-				string docstring = commandMap[c].docs;
-				int docstringLength = 80; // starting line length
-				docstringLength -= 2; // Leftmost indent
-				docstringLength -= maxCommandLength; // command name length
-				docstringLength -= 3; // rightmost padding between command and docstring.
-				docstringLength = Mathf.Max(docstringLength, 0);
 
-				bool addElipsis = docstringLength < docstring.Length;
-				if (addElipsis) {
-					docstringLength -= 3; // elipsis
-				}
+			int maxCommandLength = commandMap.Keys.Select(x => x.Length).Max();
+			int docsColumnPadding = COMMAND_INDENT + maxCommandLength + COMMAND_DOCSTRING_PADDING;
 
-				result += new string(docstring.Take(docstringLength).ToArray());
-				if (addElipsis) {
-					result += "...";
+			helpText.AppendLine("Available commands:");
+			foreach (var commandEntry in commandMap.OrderBy(x => x.Key)) {
+				string command = commandEntry.Key;
+				string docstring = commandEntry.Value.docs;
+
+				// Add the command name and enough spaces to align the docstrings.
+				helpText.AppendLine();
+				helpText.Append(new string(' ', COMMAND_INDENT));
+				helpText.Append(command);
+				helpText.Append(new string(' ', (maxCommandLength - command.Length) + COMMAND_DOCSTRING_PADDING));
+
+				// Add the docstring, wrapping and aligning to the column if necessary.
+				int docsColumnSize = LINE_WIDTH - COMMAND_INDENT - maxCommandLength - COMMAND_DOCSTRING_PADDING;
+				if (docsColumnSize > 0) {
+                    bool padOutNewLine = false;
+					while (docsColumnSize < docstring.Length) {
+						if (padOutNewLine) {
+							helpText.AppendLine();
+							helpText.Append(new string(' ', docsColumnPadding));
+						}
+						helpText.Append(docstring.Substring(0, docsColumnSize));
+						docstring = docstring.Substring(docsColumnSize);
+						padOutNewLine = true;
+					}
+
+					if (!string.IsNullOrEmpty(docstring)) {
+						if (padOutNewLine) {
+							helpText.AppendLine();
+							helpText.Append(new string(' ', docsColumnPadding));
+						}
+						helpText.Append(docstring);
+					}
 				}
 			}
-			return result;
+		} else {
+			CommandEntry command = null;
+			if (commandMap.TryGetValue(options[0], out command)) {
+				helpText.Append(command.docs);
+			} else {
+				LogError("Command not found: " + options[0]);
+			}
 		}
-		
-		CommandEntry command = null;
-		if (commandMap.TryGetValue(options[0], out command)) {
-			return command.docs;
-		}
-
-		LogError("Command not found: " + options[0]);
-		return "";
+		return helpText.ToString();
 	}
 	#endregion
-	
+
 	#region Private helper functions
 	void Log(string message, string stackTrace, LogType type) {
 		switch (type) {
@@ -196,7 +215,7 @@ To view available commands, type 'help'";
 			break;
 		}
 	}
-	
+
 	void LogMessage(string message) {
 		OutputFormatted(message ?? "", logMessageColor);
 	}
@@ -219,9 +238,9 @@ To view available commands, type 'help'";
 	}
 
 	void FindCommands() {
-		foreach(Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-			foreach(Type type in assembly.GetTypes()) {
-				foreach(MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+		foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+			foreach (Type type in assembly.GetTypes()) {
+				foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
 					ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
 					if (attrs.Length == 0)
 						continue;
@@ -232,29 +251,29 @@ To view available commands, type 'help'";
 						if (simpleAction != null) {
 							action = _ => simpleAction();
 						} else {
-							silentCommandAction silentAction = Delegate.CreateDelegate(typeof(silentCommandAction),  method, false) as silentCommandAction;
+							silentCommandAction silentAction = Delegate.CreateDelegate(typeof(silentCommandAction), method, false) as silentCommandAction;
 							if (silentAction != null) {
 								action = args => { silentAction(args); return ""; };
 							} else {
-								simpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(simpleSilentCommandAction),  method, false) as simpleSilentCommandAction;
+								simpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(simpleSilentCommandAction), method, false) as simpleSilentCommandAction;
 								action = args => { simpleSilentAction(); return ""; };
 							}
 						}
 					}
-					
+
 					if (action == null) {
 						Debug.LogError(string.Format(
-							"Method {0}.{1} is the wrong type.  It must take either no argumets, or just an array " + 
+							"Method {0}.{1} is the wrong type.  It must take either no argumets, or just an array " +
 							"of strings, and its return type must be string or void.", type, method.Name));
 						continue;
 					}
 
-					foreach(ConsoleCommand cmd in attrs) {
+					foreach (ConsoleCommand cmd in attrs) {
 						if (string.IsNullOrEmpty(cmd.commandName)) {
 							cmd.commandName = method.Name;
 						}
 
-						commandMap[cmd.commandName] = new CommandEntry(){docs = cmd.docstring ?? "", action = action };
+						commandMap[cmd.commandName] = new CommandEntry() { docs = cmd.docstring ?? "", action = action };
 					}
 				}
 			}
