@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using System.Text.RegularExpressions;
 using System.Collections;
-using System.Collections.Generic;
 
 namespace Tilde {
 public class DrawerConsole : MonoBehaviour {

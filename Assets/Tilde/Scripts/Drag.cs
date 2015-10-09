@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System.Collections;
 
 namespace Tilde {
 public class Drag : MonoBehaviour, IPointerDownHandler, IDragHandler {

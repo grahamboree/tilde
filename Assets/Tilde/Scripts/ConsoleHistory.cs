@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Tilde {
 public class ConsoleHistory {
@@ -18,9 +16,7 @@ public class ConsoleHistory {
 	public string TryGetNextCommand() {
 		if (currentHistoryOffset > 0) {
 			currentHistoryOffset--;
-			if (currentHistoryOffset == 0) {
-				return "";
-			} else {
+			if (currentHistoryOffset != 0) {
 				return history[history.Count - currentHistoryOffset];
 			}
 		}

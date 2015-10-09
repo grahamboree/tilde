@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 
 namespace Tilde {
 public class WindowedConsole : MonoBehaviour {
@@ -53,7 +52,7 @@ public class WindowedConsole : MonoBehaviour {
 					commandInput.text = next;
 					commandInput.MoveTextEnd(false);
 				}
-		} else if (Input.GetKeyDown(KeyCode.Tab)) {
+			} else if (Input.GetKeyDown(KeyCode.Tab)) {
 				// Autocomplete
 				string partialCommand = commandInput.text.Trim();
 				if (partialCommand != "") {
