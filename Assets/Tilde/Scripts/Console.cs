@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using System;
 using System.Reflection;
 using System.Linq;
@@ -15,8 +14,8 @@ namespace Tilde {
 		public string docstring;
 
 		public ConsoleCommand(string name = null, string docs = null) {
-			this.commandName = name;
-			this.docstring = docs;
+			commandName = name;
+			docstring = docs;
 		}
 	}
 
