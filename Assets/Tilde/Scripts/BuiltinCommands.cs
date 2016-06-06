@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.SceneManagement;
 using System.Linq;
 
 namespace Tilde {
@@ -17,9 +17,9 @@ namespace Tilde {
 		[ConsoleCommand(docs: "Load a scene with the given name.")]
 		public static void loadLevel(string[] options) {
 			if (options.Length == 0) {
-				throw new System.Exception("You must specify a scene to load with 'loadlevel'.");
+				throw new System.Exception("You must specify the name of a scene to load with 'loadlevel'.");
 			}
-			Application.LoadLevel(options[0]);
+            SceneManager.LoadScene(options[0]);
 		}
 
 		[ConsoleCommand(docs: "Syntax: 'bind <key> <command>' Bind a console command to a key.")]
