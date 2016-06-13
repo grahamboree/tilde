@@ -72,6 +72,8 @@ namespace Tilde {
 							commandInput.MoveTextEnd(false);
 						}
 					}
+				} else if (Input.anyKeyDown && Input.inputString != ""){
+					console.completer.ResetCurrentState();
 				}
 			}
 

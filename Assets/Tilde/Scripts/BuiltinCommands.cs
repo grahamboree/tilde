@@ -19,7 +19,7 @@ namespace Tilde {
 			if (options.Length == 0) {
 				throw new System.Exception("You must specify the name of a scene to load with 'loadlevel'.");
 			}
-            SceneManager.LoadScene(options[0]);
+			SceneManager.LoadScene(options[0]);
 		}
 
 		[ConsoleCommand(docs: "Syntax: 'bind <key> <command>' Bind a console command to a key.")]

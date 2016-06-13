@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
 namespace Tilde {
-
 	[AttributeUsage(AttributeTargets.Method)]
 	public class ConsoleCommand : Attribute {
 		public string commandName;
@@ -34,6 +33,9 @@ To view available commands, type 'help'";
 
 		/// The complete console command execution history.
 		public ConsoleHistory history = new ConsoleHistory();
+
+		/// The Console command autocompleter.
+		public Autocompleter completer;
 
 		/// Callback type for Console.Changed events.
 		public delegate void onChangeCallback(string logText);
@@ -76,6 +78,7 @@ To view available commands, type 'help'";
 			commandMap["help"] = new CommandEntry() { docs = "View available commands as well as their documentation.", action = Help };
 			FindCommands();
 			logContent.Append(startingText);
+			completer = new Autocompleter(commandMap.Keys);
 		}
 		#endregion
 
@@ -131,7 +134,7 @@ To view available commands, type 'help'";
 		/// </summary>
 		/// <param name="partialCommand">The full command name if a match is found.</param>
 		public string Autocomplete(string partialCommand) {
-			return commandMap.Keys.FirstOrDefault(x => x.StartsWith(partialCommand));
+			return completer.Complete(partialCommand);
 		}
 
 		public void SaveToFile(string filePath) {
