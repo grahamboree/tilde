@@ -258,7 +258,9 @@ To view available commands, type 'help'";
 									action = args => { silentAction(args); return ""; };
 								} else {
 									simpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(simpleSilentCommandAction), method, false) as simpleSilentCommandAction;
-									action = args => { simpleSilentAction(); return ""; };
+									if (simpleSilentAction != null) {
+										action = args => { simpleSilentAction(); return ""; };
+									}
 								}
 							}
 						}
