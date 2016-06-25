@@ -9,6 +9,8 @@ namespace Tilde {
 		// Config.
 		public const float height = 500.0f;
 
+		public Console console;
+
 		// GUI elements.
 		public GameObject consoleWindow;
 		public Text consoleText;
@@ -17,9 +19,6 @@ namespace Tilde {
 
 		// Whether or not pressing tilde will cause the console to animate to hidden or animate to shown.
 		bool shown = false;
-
-		// Cached reference to the Console singleton instance.
-		Console console;
 
 		bool Visible {
 			get {
@@ -33,7 +32,6 @@ namespace Tilde {
 			(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);
 
-			console = Console.instance;
 			console.Changed += UpdateLogContent;
 			UpdateLogContent(console.Content);
 		}

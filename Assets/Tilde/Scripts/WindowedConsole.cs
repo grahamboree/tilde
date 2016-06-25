@@ -4,13 +4,11 @@ using System.Text.RegularExpressions;
 
 namespace Tilde {
 	public class WindowedConsole : MonoBehaviour {
+		public Console console;
 		public GameObject consoleWindow;
 		public Text consoleText;
 		public Scrollbar scrollbar;
 		public InputField commandInput;
-
-		// Cached reference to the Console singleton instance.
-		Console console;
 
 		bool Visible {
 			get {
@@ -20,7 +18,6 @@ namespace Tilde {
 
 		#region MonoBehaviour
 		void Awake() {
-			console = Console.instance;
 			console.Changed += UpdateLogContent;
 			UpdateLogContent(console.Content);
 		}

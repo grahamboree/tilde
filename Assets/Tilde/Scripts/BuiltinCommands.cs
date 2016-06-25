@@ -11,7 +11,11 @@ namespace Tilde {
 
 		[ConsoleCommand(docs: "Exit the game.")]
 		public static void exit() {
+#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+#else
 			Application.Quit();
+#endif
 		}
 
 		[ConsoleCommand(docs: "Load a scene with the given name.")]
@@ -31,7 +35,8 @@ namespace Tilde {
 
 			KeyCode key = KeyCodeFromString(args[0]);
 			string command = string.Join(" ", args.Skip(1).ToArray());
-			Console.instance.boundCommands[key] = command;
+			//Console.instance.boundCommands[key] = command;
+			// TODO
 		}
 
 		[ConsoleCommand(docs: "Syntax: 'unbind <key>' Unbind a console comand from a key.")]
@@ -42,7 +47,8 @@ namespace Tilde {
 			}
 
 			KeyCode key = KeyCodeFromString(args[0]);
-			Console.instance.boundCommands.Remove(key);
+			//Console.instance.boundCommands.Remove(key);
+			// TODO
 		}
 
 		private static KeyCode KeyCodeFromString(string keyString) {

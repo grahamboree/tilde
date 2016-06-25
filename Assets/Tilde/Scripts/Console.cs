@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System;
 using System.Reflection;
 using System.Linq;
@@ -18,18 +21,15 @@ namespace Tilde {
 		}
 	}
 
-	public class Console {
+	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
+	public class Console : ScriptableObject {
 		#region Fields.
-		const string startingText = @"
-  ___  _   __         ___       __            ___  _    
- /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
-/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
-\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
-            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
-             \ \__\\ \_\/\____\ \___,_\ \____\          
-              \/__/ \/_/\/____/\/__,_ /\/____/          
-                                                        
-To view available commands, type 'help'";
+		public bool ShowUnityLogMessages = true;
+
+		[Header("Output Styling")]
+		public Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
+		public Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
+		public Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
 
 		/// The complete console command execution history.
 		public ConsoleHistory history = new ConsoleHistory();
@@ -43,36 +43,44 @@ To view available commands, type 'help'";
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
 		public event onChangeCallback Changed;
 
-		// Registering console commands
-		private delegate string commandAction(params string[] args);
-		private delegate string simpleCommandAction();
-		private delegate void silentCommandAction(string[] args);
-		private delegate void simpleSilentCommandAction();
+		const string startingText = @"
+  ___  _   __         ___       __            ___  _    
+ /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
+/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
+\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
+            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
+             \ \__\\ \_\/\____\ \___,_\ \____\          
+              \/__/ \/_/\/____/\/__,_ /\/____/          
+                                                        
+To view available commands, type 'help'";
 
-		private class CommandEntry {
+		// Registering commands
+		delegate string commandAction(params string[] args);
+		delegate string simpleCommandAction();
+		delegate void silentCommandAction(string[] args);
+		delegate void simpleSilentCommandAction();
+
+		class CommandEntry {
 			public string docs;
 			public commandAction action;
 		}
 
-		private Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
+		Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
 		public Dictionary<KeyCode, string> boundCommands = new Dictionary<KeyCode, string>();
 
 		// Log scrollback.
-		private StringBuilder logContent = new StringBuilder();
+		StringBuilder logContent = new StringBuilder();
 
 		/// The full console log string.
 		public string Content { get { return logContent.ToString(); } }
 
-		// Log styling.
-		private const string logMessageColor = "586e75";
-		private const string warningMessageColor = "b58900";
-		private const string errorMessageColor = "dc322f";
+		static HashSet<Console> instances = new HashSet<Console>();
 		#endregion
 
-		#region Singleton
-		public static Console instance { get { return _instance; } }
-		private static Console _instance = new Console();
-		private Console() {
+		#region ScriptableObject
+		void OnEnable() {
+			instances.Add(this);
+
 			// Listen for Debug.Log calls.
 			Application.logMessageReceived += Log;
 			commandMap["help"] = new CommandEntry() { docs = "View available commands as well as their documentation.", action = Help };
@@ -80,7 +88,20 @@ To view available commands, type 'help'";
 			logContent.Append(startingText);
 			completer = new Autocompleter(commandMap.Keys);
 		}
+
+		void OnDisable() {
+			instances.Remove(this);
+		}
 		#endregion
+
+#if UNITY_EDITOR
+		[UnityEditor.Callbacks.DidReloadScripts]
+		private static void OnScriptsReloaded() {
+			foreach (Console console in instances) {
+				console.FindCommands();
+			}
+		}
+#endif
 
 		#region Public Methods.
 		/// <summary>
@@ -203,7 +224,8 @@ To view available commands, type 'help'";
 
 		#region Private helper functions
 		void Log(string message, string stackTrace, LogType type) {
-			switch (type) {
+			if (ShowUnityLogMessages) {
+				switch (type) {
 				case LogType.Assert:
 				case LogType.Error:
 				case LogType.Exception:
@@ -215,24 +237,29 @@ To view available commands, type 'help'";
 				case LogType.Log:
 					LogMessage(message);
 					break;
+				}
 			}
 		}
 
 		void LogMessage(string message) {
-			OutputFormatted(message ?? "", logMessageColor);
+			OutputFormatted(message ?? "", LogColor);
 		}
 
 		void LogWarning(string warning) {
-			OutputFormatted(warning ?? "", warningMessageColor);
+			OutputFormatted(warning ?? "", WarningColor);
 		}
 
 		void LogError(string error) {
-			OutputFormatted(error ?? "", errorMessageColor);
+			OutputFormatted(error ?? "", ErrorColor);
 		}
 
-		void OutputFormatted(string message, string color) {
-			logContent.Append("\n<color=#");
-			logContent.Append(color);
+		void OutputFormatted(string message, Color color) {
+			logContent.Append("\n<color=");
+			logContent.Append(String.Format("#{0:X2}{1:X2}{2:X2}{3:X2}",
+				Mathf.RoundToInt(color.r * 255),
+				Mathf.RoundToInt(color.g * 255),
+				Mathf.RoundToInt(color.b * 255),
+				Mathf.RoundToInt(color.a * 255)));
 			logContent.Append(">");
 			logContent.Append(message);
 			logContent.Append("</color>");
@@ -244,8 +271,9 @@ To view available commands, type 'help'";
 				foreach (Type type in assembly.GetTypes()) {
 					foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
 						ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
-						if (attrs.Length == 0)
+						if (attrs.Length == 0) {
 							continue;
+						}
 
 						commandAction action = Delegate.CreateDelegate(typeof(commandAction), method, false) as commandAction;
 						if (action == null) {
