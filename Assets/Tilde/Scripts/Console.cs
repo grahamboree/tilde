@@ -12,7 +12,23 @@ using System.Collections.Generic;
 namespace Tilde {
 	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
 	public class Console : ScriptableObject {
-		#region Fields.
+		#region types
+		/// Callback type for Console.Changed events.
+		public delegate void onChangeCallback(string logText);
+
+		// Registering commands
+		delegate string commandAction(params string[] args);
+		delegate string simpleCommandAction();
+		delegate void silentCommandAction(string[] args);
+		delegate void simpleSilentCommandAction();
+
+		class CommandEntry {
+			public string docs;
+			public commandAction action;
+		}
+		#endregion
+
+		#region Public fields
 		public bool ShowUnityLogMessages = true;
 
 		[Header("Output Styling")]
@@ -25,13 +41,17 @@ namespace Tilde {
 
 		/// The Console command autocompleter.
 		public Autocompleter completer;
-
-		/// Callback type for Console.Changed events.
-		public delegate void onChangeCallback(string logText);
+			
+		public BoundCommands keyBindings = new BoundCommands();
 
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
 		public event onChangeCallback Changed;
 
+		/// The full console log string.
+		public string Content { get { return logContent.ToString(); } }
+		#endregion
+
+		#region Private fields
 		const string startingText = @"
   ___  _   __         ___       __            ___  _    
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
@@ -42,53 +62,43 @@ namespace Tilde {
               \/__/ \/_/\/____/\/__,_ /\/____/          
                                                         
 To view available commands, type 'help'";
-
-		// Registering commands
-		delegate string commandAction(params string[] args);
-		delegate string simpleCommandAction();
-		delegate void silentCommandAction(string[] args);
-		delegate void simpleSilentCommandAction();
-
-		class CommandEntry {
-			public string docs;
-			public commandAction action;
-		}
-
-		Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
-		public Dictionary<KeyCode, string> boundCommands = new Dictionary<KeyCode, string>();
+		
+		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
 
 		// Log scrollback.
 		StringBuilder logContent = new StringBuilder();
-
-		/// The full console log string.
-		public string Content { get { return logContent.ToString(); } }
-
-		static HashSet<Console> instances = new HashSet<Console>();
 		#endregion
 
 		#region ScriptableObject
 		void OnEnable() {
-			instances.Add(this);
-
 			// Listen for Debug.Log calls.
 			Application.logMessageReceived += Log;
-			commandMap["help"] = new CommandEntry() { docs = "View available commands as well as their documentation.", action = Help };
-			FindCommands();
-			logContent.Append(startingText);
-			completer = new Autocompleter(commandMap.Keys);
-		}
 
-		void OnDisable() {
-			instances.Remove(this);
+			// Add a few special commands
+			commandMap["help"] = new CommandEntry() {
+				docs = "View available commands as well as their documentation.",
+				action = Help
+			};
+			commandMap["bind"] = new CommandEntry() {
+				docs = "Syntax: 'bind <key> <command>' Bind a console command to a key.",
+				action = keyBindings.bind
+			};
+			commandMap["unbind"] = new CommandEntry() {
+				docs = "Syntax: 'unbind <key>' Unbind a console comand from a key.",
+				action = keyBindings.unbind
+			};
+
+			FindCommands(true);
+			completer = new Autocompleter(commandMap.Keys);
+
+			logContent.Append(startingText);
 		}
 		#endregion
 
 #if UNITY_EDITOR
 		[UnityEditor.Callbacks.DidReloadScripts]
 		private static void OnScriptsReloaded() {
-			foreach (Console console in instances) {
-				console.FindCommands();
-			}
+			FindCommands();
 		}
 #endif
 
@@ -131,10 +141,10 @@ To view available commands, type 'help'";
 				try {
 					return command.action(splitCommand.Skip(1).ToArray());
 				} catch (Exception e) {
-					LogError(e.Message);
+					OutputFormatted(e.Message, ErrorColor);
 				}
 			} else {
-				LogError("Unknown console command: " + commandName);
+				OutputFormatted("Unknown command: " + commandName, ErrorColor);
 			}
 			return "";
 		}
@@ -154,14 +164,19 @@ To view available commands, type 'help'";
 		#endregion
 
 		#region Built-in commands
+		/// <summary>
+		/// Special command for listing command help
+		/// </summary>
+		/// <param name="options">Any extra options passed to help.</param>
 		string Help(string[] options) {
 			const int LINE_WIDTH = 80;
 			const int COMMAND_INDENT = 2;
 			const int COMMAND_DOCSTRING_PADDING = 3;
 
 			var helpText = new StringBuilder();
-			if (options.Length == 0) {
 
+			if (options.Length == 0) {
+				// Show help for everything.
 				int maxCommandLength = commandMap.Keys.Select(x => x.Length).Max();
 				int docsColumnPadding = COMMAND_INDENT + maxCommandLength + COMMAND_DOCSTRING_PADDING;
 
@@ -200,11 +215,12 @@ To view available commands, type 'help'";
 					}
 				}
 			} else {
+				// Show help for a specific command.
 				CommandEntry command = null;
 				if (commandMap.TryGetValue(options[0], out command)) {
 					helpText.Append(command.docs);
 				} else {
-					LogError("Command not found: " + options[0]);
+					OutputFormatted("Command not found: " + options[0], ErrorColor);
 				}
 			}
 			return helpText.ToString();
@@ -213,33 +229,21 @@ To view available commands, type 'help'";
 
 		#region Private helper functions
 		void Log(string message, string stackTrace, LogType type) {
-			if (ShowUnityLogMessages) {
+			if (ShowUnityLogMessages && !string.IsNullOrEmpty(message)) {
 				switch (type) {
 				case LogType.Assert:
 				case LogType.Error:
 				case LogType.Exception:
-					LogError(message);
+					OutputFormatted(message, ErrorColor);
 					break;
 				case LogType.Warning:
-					LogWarning(message);
+					OutputFormatted(message, WarningColor);
 					break;
 				case LogType.Log:
-					LogMessage(message);
+					OutputFormatted(message, LogColor);
 					break;
 				}
 			}
-		}
-
-		void LogMessage(string message) {
-			OutputFormatted(message ?? "", LogColor);
-		}
-
-		void LogWarning(string warning) {
-			OutputFormatted(warning ?? "", WarningColor);
-		}
-
-		void LogError(string error) {
-			OutputFormatted(error ?? "", ErrorColor);
 		}
 
 		void OutputFormatted(string message, Color color) {
@@ -255,12 +259,26 @@ To view available commands, type 'help'";
 			Changed(logContent.ToString());
 		}
 
-		void FindCommands() {
+		static void FindCommands(bool silently = false) {
 			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+				// Skip non-user assemblies.
+				if (!assembly.GetName().Name.StartsWith("Assembly")) {
+					continue;
+				}
+
 				foreach (Type type in assembly.GetTypes()) {
 					foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
 						ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
 						if (attrs.Length == 0) {
+							continue;
+						}
+
+						if (!method.IsStatic) {
+							if (!silently) {
+								Debug.LogError(string.Format(
+									"Tilde: Method {0}.{1} must be static to be registered as a console command.",
+									type, method.Name));
+							}
 							continue;
 						}
 
@@ -283,9 +301,11 @@ To view available commands, type 'help'";
 						}
 
 						if (action == null) {
-							Debug.LogError(string.Format(
-								"Method {0}.{1} is the wrong type.  It must take either no argumets, or just an array " +
-								"of strings, and its return type must be string or void.", type, method.Name));
+							if (!silently) {
+								Debug.LogError(string.Format(
+									"Tilde: Method {0}.{1} is the wrong type.  It must take either no argumets, or just " +
+									"an array of strings, and its return type must be string or void.", type, method.Name));
+							}
 							continue;
 						}
 
@@ -301,5 +321,50 @@ To view available commands, type 'help'";
 			}
 		}
 		#endregion
+	}
+
+	public class BoundCommands {
+		public Dictionary<KeyCode, string> bindings = new Dictionary<KeyCode, string>();
+
+		public string bind(string[] args) {
+			if (args.Length < 2) {
+				Debug.LogError("You must specify a key and a command as arguments to 'bind'.");
+				return "";
+			}
+
+			KeyCode key = KeyCodeFromString(args[0]);
+			if (key != KeyCode.None) {
+				string command = string.Join(" ", args.Skip(1).ToArray());
+				bindings[key] = command;
+			}
+			return "";
+		}
+			
+		public string unbind(string[] args) {
+			if (args.Length != 1) {
+				Debug.LogError("Command 'unbind' only takes 1 argument.");
+				return "";
+			}
+
+			KeyCode key = KeyCodeFromString(args[0]);
+			if (key != KeyCode.None) {
+				bindings.Remove(key);
+			}
+			return "";
+		}
+
+		private static KeyCode KeyCodeFromString(string keyString) {
+			if (keyString.Length == 1) {
+				keyString = keyString.ToUpper();
+			}
+
+			KeyCode key = KeyCode.None;
+			try {
+				key = (KeyCode)System.Enum.Parse(typeof(KeyCode), keyString);
+			} catch (System.ArgumentException) {
+				Debug.LogError("Key '" + keyString + "' does not specify a key code.");
+			}
+			return key;
+		}
 	}
 }

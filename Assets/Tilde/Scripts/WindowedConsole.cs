@@ -70,7 +70,7 @@ namespace Tilde {
 
 			// Run any bound commands triggered this frame.
 			if (!commandInput.isFocused) {
-				foreach (var boundCommand in console.boundCommands) {
+				foreach (var boundCommand in console.keyBindings.bindings) {
 					if (Input.GetKeyDown(boundCommand.Key)) {
 						console.RunCommand(boundCommand.Value);
 					}
