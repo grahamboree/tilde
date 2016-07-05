@@ -10,17 +10,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
 namespace Tilde {
-	[AttributeUsage(AttributeTargets.Method)]
-	public class ConsoleCommand : Attribute {
-		public string commandName;
-		public string docstring;
-
-		public ConsoleCommand(string name = null, string docs = null) {
-			commandName = name;
-			docstring = docs;
-		}
-	}
-
 	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
 	public class Console : ScriptableObject {
 		#region Fields.
