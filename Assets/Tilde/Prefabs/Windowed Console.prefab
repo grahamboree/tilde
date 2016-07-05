@@ -727,6 +727,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e9e6a485f6c64bae85b8570fb72fcf6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  console: {fileID: 11400000, guid: a2b6a06c20c47604bb9a436a4a291410, type: 2}
   consoleWindow: {fileID: 153406}
   consoleText: {fileID: 11453412}
   scrollbar: {fileID: 11453388}
