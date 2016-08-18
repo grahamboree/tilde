@@ -41,7 +41,7 @@ namespace Tilde {
 
 		/// The Console command autocompleter.
 		public Autocompleter completer;
-			
+
 		public BoundCommands keyBindings = new BoundCommands();
 
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
@@ -62,7 +62,7 @@ namespace Tilde {
               \/__/ \/_/\/____/\/__,_ /\/____/          
                                                         
 To view available commands, type 'help'";
-		
+
 		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
 
 		// Log scrollback.
@@ -120,7 +120,7 @@ To view available commands, type 'help'";
 		public void RunCommand(string command) {
 			logContent.Append("\n> ");
 			logContent.Append(command);
-			// Inform the UI that the console text has changed so it can redraw, 
+			// Inform the UI that the console text has changed so it can redraw,
 			// in case the command takes a while to execute.
 			Changed(logContent.ToString());
 			history.AddCommandToHistory(command);
@@ -339,7 +339,7 @@ To view available commands, type 'help'";
 			}
 			return "";
 		}
-			
+
 		public string unbind(string[] args) {
 			if (args.Length != 1) {
 				Debug.LogError("Command 'unbind' only takes 1 argument.");
