@@ -57,15 +57,15 @@ namespace Tilde {
 		#endregion
 
 		#region Private fields
-		const string StartingText = @"
-  ___  _   __         ___       __            ___  _    
- /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
-/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
-\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/    
-            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/           
-             \ \__\\ \_\/\____\ \___,_\ \____\          
-              \/__/ \/_/\/____/\/__,_ /\/____/          
-                                                        
+		const string startingText = @"
+  ___  _   __         ___       __            ___  _
+ /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
+/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//
+\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/
+            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/
+             \ \__\\ \_\/\____\ \___,_\ \____\
+              \/__/ \/_/\/____/\/__,_ /\/____/
+
 To view available commands, type 'help'";
 
 		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
