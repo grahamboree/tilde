@@ -28,13 +28,13 @@ namespace Tilde {
 		}
 		#endregion
 
-		#region Public fields
-		public bool ShowUnityLogMessages = true;
+		#region Serialized fields.
+		[SerializeField] bool ShowUnityLogMessages = true;
 
 		[Header("Output Styling")]
-		public Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
-		public Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
-		public Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
+		[SerializeField] Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
+        [SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
+        [SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
 
 		/// The complete console command execution history.
 		public ConsoleHistory history = new ConsoleHistory();
