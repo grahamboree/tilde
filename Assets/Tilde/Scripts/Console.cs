@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -8,51 +9,55 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 namespace Tilde {
 	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
 	public class Console : ScriptableObject {
 		#region types
-		/// Callback type for Console.Changed events.
-		public delegate void onChangeCallback(string logText);
+
+	    /// Callback type for Console.Changed events.
+	    public class OnChangeCallback : UnityEvent<string> {}
 
 		// Registering commands
-		delegate string commandAction(params string[] args);
-		delegate string simpleCommandAction();
-		delegate void silentCommandAction(string[] args);
-		delegate void simpleSilentCommandAction();
+		delegate string CommandAction(params string[] args);
+		delegate string SimpleCommandAction();
+		delegate void SilentCommandAction(string[] args);
+		delegate void SimpleSilentCommandAction();
 
 		class CommandEntry {
-			public string docs;
-			public commandAction action;
+			public string Docs;
+			public CommandAction Action;
+			public Autocompleter[] Completers;
 		}
 		#endregion
 
 		#region Serialized fields.
 		[SerializeField] bool ShowUnityLogMessages = true;
 
-		[Header("Output Styling")]
+        [Header("Output Styling")]
 		[SerializeField] Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
         [SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
         [SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
 
 		/// The complete console command execution history.
-		public ConsoleHistory history = new ConsoleHistory();
+		public ConsoleHistory History = new ConsoleHistory();
 
 		/// The Console command autocompleter.
-		public Autocompleter completer;
+		public Autocompleter Completer;
 
-		public BoundCommands keyBindings = new BoundCommands();
+		public BoundCommands KeyBindings = new BoundCommands();
 
-		/// Occurs when the log contents have changed, most often occurring when a command is executed.
-		public event onChangeCallback Changed;
+	    /// Occurs when the log contents have changed, most often occurring when a command is executed.
+	    public OnChangeCallback Changed = new OnChangeCallback();
+		//public event OnChangeCallback Changed;
 
 		/// The full console log string.
 		public string Content { get { return logContent.ToString(); } }
 		#endregion
 
 		#region Private fields
-		const string startingText = @"
+		const string StartingText = @"
   ___  _   __         ___       __            ___  _    
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \   
 /\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//   
@@ -66,7 +71,7 @@ To view available commands, type 'help'";
 		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
 
 		// Log scrollback.
-		StringBuilder logContent = new StringBuilder();
+		StringBuilder logContent;
 		#endregion
 
 		#region ScriptableObject
@@ -76,28 +81,29 @@ To view available commands, type 'help'";
 
 			// Add a few special commands
 			commandMap["help"] = new CommandEntry() {
-				docs = "View available commands as well as their documentation.",
-				action = Help
+				Docs = "View available commands as well as their documentation.",
+				Action = Help
 			};
 			commandMap["bind"] = new CommandEntry() {
-				docs = "Syntax: 'bind <key> <command>' Bind a console command to a key.",
-				action = keyBindings.bind
+				Docs = "Syntax: 'bind <key> <command>' Bind a console command to a key.",
+				Action = KeyBindings.bind
 			};
 			commandMap["unbind"] = new CommandEntry() {
-				docs = "Syntax: 'unbind <key>' Unbind a console comand from a key.",
-				action = keyBindings.unbind
+				Docs = "Syntax: 'unbind <key>' Unbind a console comand from a key.",
+				Action = KeyBindings.unbind
 			};
 
 			FindCommands(true);
-			completer = new Autocompleter(commandMap.Keys);
+			Completer = new Autocompleter(commandMap.Keys);
 
-			logContent.Append(startingText);
+		    logContent = new StringBuilder();
+            logContent.Append(StartingText);
 		}
 		#endregion
 
 #if UNITY_EDITOR
 		[UnityEditor.Callbacks.DidReloadScripts]
-		private static void OnScriptsReloaded() {
+        static void OnScriptsReloaded() {
 			FindCommands();
 		}
 #endif
@@ -110,7 +116,7 @@ To view available commands, type 'help'";
 		public void OutputStringToConsole(string message) {
 			logContent.Append("\n");
 			logContent.Append(message);
-			Changed(logContent.ToString());
+            Changed.Invoke(logContent.ToString());
 		}
 
 		/// <summary>
@@ -122,11 +128,11 @@ To view available commands, type 'help'";
 			logContent.Append(command);
 			// Inform the UI that the console text has changed so it can redraw,
 			// in case the command takes a while to execute.
-			Changed(logContent.ToString());
-			history.AddCommandToHistory(command);
+			Changed.Invoke(logContent.ToString());
+			History.AddCommandToHistory(command);
 			logContent.Append("\n");
 			logContent.Append(SilentlyRunCommand(command));
-			Changed(logContent.ToString());
+			Changed.Invoke(logContent.ToString());
 		}
 
 		/// <summary>
@@ -139,7 +145,7 @@ To view available commands, type 'help'";
 			CommandEntry command = null;
 			if (commandMap.TryGetValue(commandName, out command)) {
 				try {
-					return command.action(splitCommand.Skip(1).ToArray());
+					return command.Action(splitCommand.Skip(1).ToArray());
 				} catch (Exception e) {
 					OutputFormatted(e.Message, ErrorColor);
 				}
@@ -154,7 +160,7 @@ To view available commands, type 'help'";
 		/// </summary>
 		/// <param name="partialCommand">The full command name if a match is found.</param>
 		public string Autocomplete(string partialCommand) {
-			return completer.Complete(partialCommand);
+			return Completer.Complete(partialCommand);
 		}
 
 		public void SaveToFile(string filePath) {
@@ -183,7 +189,7 @@ To view available commands, type 'help'";
 				helpText.AppendLine("Available commands:");
 				foreach (var commandEntry in commandMap.OrderBy(x => x.Key)) {
 					string command = commandEntry.Key;
-					string docstring = commandEntry.Value.docs;
+					string docstring = commandEntry.Value.Docs;
 
 					// Add the command name and enough spaces to align the docstrings.
 					helpText.AppendLine();
@@ -218,7 +224,7 @@ To view available commands, type 'help'";
 				// Show help for a specific command.
 				CommandEntry command = null;
 				if (commandMap.TryGetValue(options[0], out command)) {
-					helpText.Append(command.docs);
+					helpText.Append(command.Docs);
 				} else {
 					OutputFormatted("Command not found: " + options[0], ErrorColor);
 				}
@@ -256,7 +262,7 @@ To view available commands, type 'help'";
 			logContent.Append(">");
 			logContent.Append(message);
 			logContent.Append("</color>");
-			Changed(logContent.ToString());
+			Changed.Invoke(logContent.ToString());
 		}
 
 		static void FindCommands(bool silently = false) {
@@ -268,8 +274,8 @@ To view available commands, type 'help'";
 
 				foreach (Type type in assembly.GetTypes()) {
 					foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
-						ConsoleCommand[] attrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
-						if (attrs.Length == 0) {
+						ConsoleCommand[] commandAttrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
+						if (commandAttrs == null || commandAttrs.Length == 0) {
 							continue;
 						}
 
@@ -282,17 +288,17 @@ To view available commands, type 'help'";
 							continue;
 						}
 
-						commandAction action = Delegate.CreateDelegate(typeof(commandAction), method, false) as commandAction;
+						CommandAction action = Delegate.CreateDelegate(typeof(CommandAction), method, false) as CommandAction;
 						if (action == null) {
-							simpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(simpleCommandAction), method, false) as simpleCommandAction;
+							SimpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(SimpleCommandAction), method, false) as SimpleCommandAction;
 							if (simpleAction != null) {
 								action = _ => simpleAction();
 							} else {
-								silentCommandAction silentAction = Delegate.CreateDelegate(typeof(silentCommandAction), method, false) as silentCommandAction;
+								SilentCommandAction silentAction = Delegate.CreateDelegate(typeof(SilentCommandAction), method, false) as SilentCommandAction;
 								if (silentAction != null) {
 									action = args => { silentAction(args); return ""; };
 								} else {
-									simpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(simpleSilentCommandAction), method, false) as simpleSilentCommandAction;
+									SimpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(SimpleSilentCommandAction), method, false) as SimpleSilentCommandAction;
 									if (simpleSilentAction != null) {
 										action = args => { simpleSilentAction(); return ""; };
 									}
@@ -309,13 +315,29 @@ To view available commands, type 'help'";
 							continue;
 						}
 
-						foreach (ConsoleCommand cmd in attrs) {
-							if (string.IsNullOrEmpty(cmd.commandName)) {
-								cmd.commandName = method.Name;
+						Completion[] completionAttrs = method.GetCustomAttributes(typeof(Completion), true) as Completion[];
+						Autocompleter[] completers = null;
+						if (completionAttrs != null) {
+							int maxArgIndex = -1;
+							for (int i = 0; i < completionAttrs.Length; ++i) {
+								maxArgIndex = Math.Max(completionAttrs[i].ArgIndex, maxArgIndex);
 							}
-
-							commandMap[cmd.commandName] = new CommandEntry() { docs = cmd.docstring ?? "", action = action };
+							if (maxArgIndex >= 0) {
+								completers = new Autocompleter[maxArgIndex + 1];
+							}
 						}
+
+						string command = commandAttrs[0].CommandName;
+						if (string.IsNullOrEmpty(command)) {
+							command = method.Name;
+						}
+						string docs = commandAttrs[0].Docstring ?? "";
+
+						commandMap[command] = new CommandEntry() {
+							Docs = docs,
+							Action = action,
+							Completers = completers
+						};
 					}
 				}
 			}

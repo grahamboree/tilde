@@ -1,21 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Tilde {
 	public class Autocompleter {
-		/// The original string we're completing.
-		private string partial = "";
+        #region Fields.
+        /// The original string we're completing.
+        string partial = "";
 
-		private int currentCompletionOffset = 0;
-		private IEnumerable<string> options;
+		int currentCompletionOffset = 0;
+		IEnumerable<string> options;
+        #endregion
 
-		public Autocompleter(IEnumerable<string> options) {
+        public Autocompleter(IEnumerable<string> options) {
 			this.options = options;
 		}
 
-		public string Complete(string partialSelection) {
+        #region public methods
+        public string Complete(string partialSelection) {
 			if (partialSelection.StartsWith(partial) && currentCompletionOffset > 0) {
 				partialSelection = partial;
 			} else {
@@ -39,5 +40,6 @@ namespace Tilde {
 			currentCompletionOffset = 0;
 			partial = "";
 		}
-	}
+        #endregion
+    }
 }

@@ -25,5 +25,11 @@ namespace Tilde {
 			}
 			SceneManager.LoadScene(options[0]);
 		}
+
+		[ConsoleCommand]
+		[Completion(1, "one", "two", "three")]
+		public static string testFail(string[] args) {
+			return string.Join("\n", args);
+		}
 	}
 }

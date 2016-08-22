@@ -31,8 +31,7 @@ namespace Tilde {
 		void Awake() {
 			(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);
-
-			console.Changed += UpdateLogContent;
+			console.Changed.AddListener(UpdateLogContent);
 			UpdateLogContent(console.Content);
 		}
 
@@ -49,13 +48,13 @@ namespace Tilde {
 				if (Input.GetKeyDown(KeyCode.Return)) {
 					SubmitText();
 				} else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-					string previous = console.history.TryGetPreviousCommand();
+					string previous = console.History.TryGetPreviousCommand();
 					if (previous != null) {
 						commandInput.text = previous;
 						commandInput.MoveTextEnd(false);
 					}
 				} else if (Input.GetKeyDown(KeyCode.DownArrow)) {
-					string next = console.history.TryGetNextCommand();
+					string next = console.History.TryGetNextCommand();
 					if (next != null) {
 						commandInput.text = next;
 						commandInput.MoveTextEnd(false);
@@ -71,7 +70,7 @@ namespace Tilde {
 						}
 					}
 				} else if (Input.anyKeyDown && Input.inputString != ""){
-					console.completer.ResetCurrentState();
+					console.Completer.ResetCurrentState();
 				}
 			}
 
@@ -81,7 +80,7 @@ namespace Tilde {
 
 			// Run any bound commands triggered this frame.
 			if (!commandInput.isFocused) {
-				foreach (var boundCommand in console.keyBindings.bindings) {
+				foreach (var boundCommand in console.KeyBindings.bindings) {
 					if (Input.GetKeyDown(boundCommand.Key)) {
 						console.RunCommand(boundCommand.Value);
 					}
@@ -90,7 +89,7 @@ namespace Tilde {
 		}
 
 		void OnDestroy() {
-			console.Changed -= UpdateLogContent;
+			console.Changed.RemoveListener(UpdateLogContent);
 		}
 		#endregion
 
