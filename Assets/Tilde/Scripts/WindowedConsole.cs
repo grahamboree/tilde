@@ -51,10 +51,13 @@ namespace Tilde {
 					}
 				} else if (Input.GetKeyDown(KeyCode.Tab)) {
 					// Autocomplete
-					string partialCommand = commandInput.text.Trim();
-					if (partialCommand != "") {
+					string partialCommand = commandInput.text.Replace("\t", "");
+					commandInput.text = partialCommand;
+					partialCommand.TrimStart();
+
+					if (partialCommand.Trim() != "") {
 						string result = console.Autocomplete(partialCommand);
-						if (result != null) {
+						if (result != null && result != partialCommand) {
 							commandInput.text = result;
 							commandInput.MoveTextEnd(false);
 						}

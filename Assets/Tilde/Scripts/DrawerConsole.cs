@@ -61,10 +61,13 @@ namespace Tilde {
 					}
 				} else if (Input.GetKeyDown(KeyCode.Tab)) {
 					// Autocomplete
-					string partialCommand = commandInput.text.Trim();
-					if (partialCommand != "") {
+					string partialCommand = commandInput.text.Replace("\t", "");
+					commandInput.text = partialCommand;
+					partialCommand.TrimStart();
+
+					if (partialCommand.Trim() != "") {
 						string result = console.Autocomplete(partialCommand);
-						if (result != null) {
+						if (result != null && result != partialCommand) {
 							commandInput.text = result;
 							commandInput.MoveTextEnd(false);
 						}
@@ -134,8 +137,8 @@ namespace Tilde {
 
 		#region UI Events.
 		public void SubmitText() {
-			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
-			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 
+			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work
+			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove
 			// them to get the raw command.
 			string strippedText = Regex.Replace(commandInput.text, @"\n", "");
 			if (strippedText != "") {

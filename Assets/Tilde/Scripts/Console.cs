@@ -16,8 +16,8 @@ namespace Tilde {
 	public class Console : ScriptableObject {
 		#region types
 
-	    /// Callback type for Console.Changed events.
-	    public class OnChangeCallback : UnityEvent<string> {}
+		/// Callback type for Console.Changed events.
+		public class OnChangeCallback : UnityEvent<string> {}
 
 		// Registering commands
 		delegate string CommandAction(params string[] args);
@@ -35,10 +35,10 @@ namespace Tilde {
 		#region Serialized fields.
 		[SerializeField] bool ShowUnityLogMessages = true;
 
-        [Header("Output Styling")]
+		[Header("Output Styling")]
 		[SerializeField] Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
-        [SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
-        [SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
+		[SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
+		[SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
 
 		/// The complete console command execution history.
 		public ConsoleHistory History = new ConsoleHistory();
@@ -48,8 +48,8 @@ namespace Tilde {
 
 		public BoundCommands KeyBindings = new BoundCommands();
 
-	    /// Occurs when the log contents have changed, most often occurring when a command is executed.
-	    public OnChangeCallback Changed = new OnChangeCallback();
+		/// Occurs when the log contents have changed, most often occurring when a command is executed.
+		public OnChangeCallback Changed = new OnChangeCallback();
 		//public event OnChangeCallback Changed;
 
 		/// The full console log string.
@@ -57,7 +57,7 @@ namespace Tilde {
 		#endregion
 
 		#region Private fields
-		const string startingText = @"
+		const string StartingText = @"
   ___  _   __         ___       __            ___  _
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
 /\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//
@@ -96,14 +96,14 @@ To view available commands, type 'help'";
 			FindCommands(true);
 			Completer = new Autocompleter(commandMap.Keys);
 
-		    logContent = new StringBuilder();
-            logContent.Append(StartingText);
+			logContent = new StringBuilder();
+			logContent.Append(StartingText);
 		}
 		#endregion
 
 #if UNITY_EDITOR
 		[UnityEditor.Callbacks.DidReloadScripts]
-        static void OnScriptsReloaded() {
+		static void OnScriptsReloaded() {
 			FindCommands();
 		}
 #endif
@@ -116,7 +116,7 @@ To view available commands, type 'help'";
 		public void OutputStringToConsole(string message) {
 			logContent.Append("\n");
 			logContent.Append(message);
-            Changed.Invoke(logContent.ToString());
+			Changed.Invoke(logContent.ToString());
 		}
 
 		/// <summary>
@@ -160,7 +160,35 @@ To view available commands, type 'help'";
 		/// </summary>
 		/// <param name="partialCommand">The full command name if a match is found.</param>
 		public string Autocomplete(string partialCommand) {
-			return Completer.Complete(partialCommand);
+			if (partialCommand.EndsWith("\t")) {
+				partialCommand.Substring(0, partialCommand.Length - 1); // Remove the \t
+			}
+			string[] parameters = partialCommand.Split(new [] {' '}, StringSplitOptions.RemoveEmptyEntries);
+
+			if (parameters.Length == 1 && !partialCommand.EndsWith(" ")) {
+				return Completer.Complete(partialCommand);
+			}
+
+			if (commandMap.ContainsKey(parameters[0])) {
+				int lastIndex = parameters.Length - 1;
+				if (partialCommand.EndsWith(" ")) {
+					lastIndex++;
+				}
+
+				var completers = commandMap[parameters[0]].Completers;
+				if (completers.Length > lastIndex) {
+					if (completers[lastIndex] != null) {
+						string lastParam = lastIndex < parameters.Length ? parameters[lastIndex] : "";
+						string completion = completers[lastIndex].Complete(lastParam);
+						if (lastParam == "") {
+							return partialCommand + completion;
+						} else {
+							return partialCommand.Substring(0, partialCommand.Length - lastParam.Length) + completion;
+						}
+					}
+				}
+			}
+			return partialCommand;
 		}
 
 		public void SaveToFile(string filePath) {
@@ -324,6 +352,11 @@ To view available commands, type 'help'";
 							}
 							if (maxArgIndex >= 0) {
 								completers = new Autocompleter[maxArgIndex + 1];
+
+								for (int i = 0; i < completionAttrs.Length; ++i) {
+									var completion = completionAttrs[i];
+									completers[completion.ArgIndex] = new Autocompleter(completion.Options);
+								}
 							}
 						}
 
