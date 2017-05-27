@@ -1,6 +1,5 @@
 ﻿using System;
 
-
 namespace Tilde {
 	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
 	public class ConsoleCommand : Attribute {

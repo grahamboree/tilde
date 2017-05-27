@@ -10,11 +10,7 @@ namespace Tilde {
 		public Scrollbar scrollbar;
 		public InputField commandInput;
 
-		bool Visible {
-			get {
-				return consoleWindow != null && consoleWindow.gameObject.activeSelf;
-			}
-		}
+		bool Visible { get { return consoleWindow != null && consoleWindow.gameObject.activeSelf; } }
 
 		#region MonoBehaviour
 		void Awake() {
@@ -53,7 +49,7 @@ namespace Tilde {
 					// Autocomplete
 					string partialCommand = commandInput.text.Replace("\t", "");
 					commandInput.text = partialCommand;
-					partialCommand.TrimStart();
+					partialCommand = partialCommand.TrimStart();
 
 					if (partialCommand.Trim() != "") {
 						string result = console.Autocomplete(partialCommand);

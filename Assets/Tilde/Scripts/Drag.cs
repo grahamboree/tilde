@@ -3,14 +3,9 @@ using UnityEngine.EventSystems;
 
 namespace Tilde {
 	public class Drag : MonoBehaviour, IPointerDownHandler, IDragHandler {
-		public RectTransform panelRectTransform;
-		private Vector2 originalLocalPointerPosition;
-		private Vector3 originalPanelLocalPosition;
-		private RectTransform parentRectTransform;
+		[SerializeField] RectTransform panelRectTransform;
 
-		void Awake() {
-			parentRectTransform = panelRectTransform.parent as RectTransform;
-		}
+		//////////////////////////////////////////////////
 
 		public void OnPointerDown(PointerEventData data) {
 			originalPanelLocalPosition = panelRectTransform.localPosition;
@@ -28,5 +23,19 @@ namespace Tilde {
 				panelRectTransform.localPosition = originalPanelLocalPosition + offsetToOriginal;
 			}
 		}
+
+		//////////////////////////////////////////////////
+
+		Vector2 originalLocalPointerPosition;
+		Vector3 originalPanelLocalPosition;
+		RectTransform parentRectTransform;
+
+		//////////////////////////////////////////////////
+
+		#region MonoBehaviour
+		void Awake() {
+			parentRectTransform = panelRectTransform.parent as RectTransform;
+		}
+		#endregion
 	}
 }

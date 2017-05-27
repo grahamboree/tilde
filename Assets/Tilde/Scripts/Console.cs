@@ -1,8 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.EventSystems;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using System;
 using System.Reflection;
 using System.Linq;
@@ -14,8 +10,7 @@ using UnityEngine.Events;
 namespace Tilde {
 	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
 	public class Console : ScriptableObject {
-		#region types
-
+		#region Types
 		/// Callback type for Console.Changed events.
 		public class OnChangeCallback : UnityEvent<string> {}
 
@@ -31,14 +26,17 @@ namespace Tilde {
 			public Autocompleter[] Completers;
 		}
 		#endregion
+		
+		//////////////////////////////////////////////////
 
-		#region Serialized fields.
 		[SerializeField] bool ShowUnityLogMessages = true;
 
 		[Header("Output Styling")]
 		[SerializeField] Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
 		[SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
 		[SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
+		
+		//////////////////////////////////////////////////
 
 		/// The complete console command execution history.
 		public ConsoleHistory History = new ConsoleHistory();
@@ -50,65 +48,10 @@ namespace Tilde {
 
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
 		public OnChangeCallback Changed = new OnChangeCallback();
-		//public event OnChangeCallback Changed;
 
 		/// The full console log string.
 		public string Content { get { return logContent.ToString(); } }
-		#endregion
-
-		#region Private fields
-		const string StartingText = @"
-  ___  _   __         ___       __            ___  _
- /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
-/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//
-\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/
-            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/
-             \ \__\\ \_\/\____\ \___,_\ \____\
-              \/__/ \/_/\/____/\/__,_ /\/____/
-
-To view available commands, type 'help'";
-
-		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
-
-		// Log scrollback.
-		StringBuilder logContent;
-		#endregion
-
-		#region ScriptableObject
-		void OnEnable() {
-			// Listen for Debug.Log calls.
-			Application.logMessageReceived += Log;
-
-			// Add a few special commands
-			commandMap["help"] = new CommandEntry() {
-				Docs = "View available commands as well as their documentation.",
-				Action = Help
-			};
-			commandMap["bind"] = new CommandEntry() {
-				Docs = "Syntax: 'bind <key> <command>' Bind a console command to a key.",
-				Action = KeyBindings.bind
-			};
-			commandMap["unbind"] = new CommandEntry() {
-				Docs = "Syntax: 'unbind <key>' Unbind a console comand from a key.",
-				Action = KeyBindings.unbind
-			};
-
-			FindCommands(true);
-			Completer = new Autocompleter(commandMap.Keys);
-
-			logContent = new StringBuilder();
-			logContent.Append(StartingText);
-		}
-		#endregion
-
-#if UNITY_EDITOR
-		[UnityEditor.Callbacks.DidReloadScripts]
-		static void OnScriptsReloaded() {
-			FindCommands();
-		}
-#endif
-
-		#region Public Methods.
+		
 		/// <summary>
 		/// Print a string to the console window.  Appears as if it was command output.
 		/// </summary>
@@ -142,7 +85,7 @@ To view available commands, type 'help'";
 		public string SilentlyRunCommand(string commandString) {
 			string[] splitCommand = commandString.Split(' ');
 			string commandName = splitCommand[0];
-			CommandEntry command = null;
+			CommandEntry command;
 			if (commandMap.TryGetValue(commandName, out command)) {
 				try {
 					return command.Action(splitCommand.Skip(1).ToArray());
@@ -161,9 +104,10 @@ To view available commands, type 'help'";
 		/// <param name="partialCommand">The full command name if a match is found.</param>
 		public string Autocomplete(string partialCommand) {
 			if (partialCommand.EndsWith("\t")) {
-				partialCommand.Substring(0, partialCommand.Length - 1); // Remove the \t
+				// Remove the \t
+				partialCommand = partialCommand.Substring(0, partialCommand.Length - 1);
 			}
-			string[] parameters = partialCommand.Split(new [] {' '}, StringSplitOptions.RemoveEmptyEntries);
+			var parameters = partialCommand.Split(new [] {' '}, StringSplitOptions.RemoveEmptyEntries);
 
 			if (parameters.Length == 1 && !partialCommand.EndsWith(" ")) {
 				return Completer.Complete(partialCommand);
@@ -182,9 +126,8 @@ To view available commands, type 'help'";
 						string completion = completers[lastIndex].Complete(lastParam);
 						if (lastParam == "") {
 							return partialCommand + completion;
-						} else {
-							return partialCommand.Substring(0, partialCommand.Length - lastParam.Length) + completion;
 						}
+						return partialCommand.Substring(0, partialCommand.Length - lastParam.Length) + completion;
 					}
 				}
 			}
@@ -195,9 +138,61 @@ To view available commands, type 'help'";
 			var lines = Regex.Replace(logContent.ToString(), "<.*?>", string.Empty).Split('\n');
 			System.IO.File.WriteAllLines(filePath, lines);
 		}
+
+		//////////////////////////////////////////////////
+
+		const string StartingText = @"
+  ___  _   __         ___       __            ___  _
+ /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
+/\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//
+\//\/__/   \ \ \/\/\ \ \ \ \   / _  \  / __`\//\/__/
+            \ \ \_\ \ \ \_\ \_/\ \/\ \/\  __/
+             \ \__\\ \_\/\____\ \___,_\ \____\
+              \/__/ \/_/\/____/\/__,_ /\/____/
+
+To view available commands, type 'help'";
+
+		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
+
+		// Log scrollback.
+		StringBuilder logContent;
+
+		//////////////////////////////////////////////////
+
+		#region ScriptableObject
+		void OnEnable() {
+			// Listen for Debug.Log calls.
+			Application.logMessageReceived += Log;
+
+			// Add a few special commands
+			commandMap["help"] = new CommandEntry() {
+				Docs = "View available commands as well as their documentation.",
+				Action = Help
+			};
+			commandMap["Bind"] = new CommandEntry() {
+				Docs = "Syntax: 'Bind <key> <command>' Bind a console command to a key.",
+				Action = KeyBindings.Bind
+			};
+			commandMap["Unbind"] = new CommandEntry() {
+				Docs = "Syntax: 'Unbind <key>' Unbind a console comand from a key.",
+				Action = KeyBindings.Unbind
+			};
+
+			FindCommands(true);
+			Completer = new Autocompleter(commandMap.Keys);
+
+			logContent = new StringBuilder();
+			logContent.Append(StartingText);
+		}
 		#endregion
 
-		#region Built-in commands
+#if UNITY_EDITOR
+		[UnityEditor.Callbacks.DidReloadScripts]
+		static void OnScriptsReloaded() {
+			FindCommands();
+		}
+#endif
+
 		/// <summary>
 		/// Special command for listing command help
 		/// </summary>
@@ -250,7 +245,7 @@ To view available commands, type 'help'";
 				}
 			} else {
 				// Show help for a specific command.
-				CommandEntry command = null;
+				CommandEntry command;
 				if (commandMap.TryGetValue(options[0], out command)) {
 					helpText.Append(command.Docs);
 				} else {
@@ -259,9 +254,7 @@ To view available commands, type 'help'";
 			}
 			return helpText.ToString();
 		}
-		#endregion
 
-		#region Private helper functions
 		void Log(string message, string stackTrace, LogType type) {
 			if (ShowUnityLogMessages && !string.IsNullOrEmpty(message)) {
 				switch (type) {
@@ -347,8 +340,8 @@ To view available commands, type 'help'";
 						Autocompleter[] completers = null;
 						if (completionAttrs != null) {
 							int maxArgIndex = -1;
-							for (int i = 0; i < completionAttrs.Length; ++i) {
-								maxArgIndex = Math.Max(completionAttrs[i].ArgIndex, maxArgIndex);
+							foreach (var completion in completionAttrs) {
+								maxArgIndex = Math.Max(completion.ArgIndex, maxArgIndex);
 							}
 							if (maxArgIndex >= 0) {
 								completers = new Autocompleter[maxArgIndex + 1];
@@ -375,19 +368,18 @@ To view available commands, type 'help'";
 				}
 			}
 		}
-		#endregion
 	}
 
 	public class BoundCommands {
 		public Dictionary<KeyCode, string> bindings = new Dictionary<KeyCode, string>();
 
-		public string bind(string[] args) {
+		public string Bind(string[] args) {
 			if (args.Length < 2) {
-				Debug.LogError("You must specify a key and a command as arguments to 'bind'.");
+				Debug.LogError("You must specify a key and a command as arguments to 'Bind'.");
 				return "";
 			}
 
-			KeyCode key = KeyCodeFromString(args[0]);
+			var key = KeyCodeFromString(args[0]);
 			if (key != KeyCode.None) {
 				string command = string.Join(" ", args.Skip(1).ToArray());
 				bindings[key] = command;
@@ -395,28 +387,30 @@ To view available commands, type 'help'";
 			return "";
 		}
 
-		public string unbind(string[] args) {
+		public string Unbind(string[] args) {
 			if (args.Length != 1) {
-				Debug.LogError("Command 'unbind' only takes 1 argument.");
+				Debug.LogError("Command 'Unbind' only takes 1 argument.");
 				return "";
 			}
 
-			KeyCode key = KeyCodeFromString(args[0]);
+			var key = KeyCodeFromString(args[0]);
 			if (key != KeyCode.None) {
 				bindings.Remove(key);
 			}
 			return "";
 		}
+		
+		//////////////////////////////////////////////////
 
-		private static KeyCode KeyCodeFromString(string keyString) {
+		static KeyCode KeyCodeFromString(string keyString) {
 			if (keyString.Length == 1) {
 				keyString = keyString.ToUpper();
 			}
 
-			KeyCode key = KeyCode.None;
+			var key = KeyCode.None;
 			try {
-				key = (KeyCode)System.Enum.Parse(typeof(KeyCode), keyString);
-			} catch (System.ArgumentException) {
+				key = (KeyCode)Enum.Parse(typeof(KeyCode), keyString);
+			} catch (ArgumentException) {
 				Debug.LogError("Key '" + keyString + "' does not specify a key code.");
 			}
 			return key;

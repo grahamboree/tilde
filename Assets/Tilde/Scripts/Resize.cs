@@ -5,8 +5,8 @@ namespace Tilde {
 	public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
 		public Vector2 minSize = new Vector2(100, 100);
 		public RectTransform panelRectTransform;
-		private Vector2 originalLocalPointerPosition;
-		private Vector2 originalSizeDelta;
+		Vector2 originalLocalPointerPosition;
+		Vector2 originalSizeDelta;
 
 		public void OnPointerDown(PointerEventData data) {
 			originalSizeDelta = panelRectTransform.sizeDelta;

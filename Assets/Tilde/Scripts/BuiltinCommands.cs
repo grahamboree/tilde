@@ -19,7 +19,7 @@ namespace Tilde {
 		}
 
 		[ConsoleCommand(docs: "Load a scene with the given name.")]
-		public static void loadLevel(string[] options) {
+		public static void LoadLevel(string[] options) {
 			if (options.Length == 0) {
 				throw new System.Exception("You must specify the name of a scene to load with 'loadlevel'.");
 			}

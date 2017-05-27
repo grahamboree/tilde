@@ -2,9 +2,6 @@
 
 namespace Tilde {
 	public class ConsoleHistory {
-		private List<string> history = new List<string>();
-		private int currentHistoryOffset = 0;
-
 		public string TryGetPreviousCommand() {
 			if (currentHistoryOffset < history.Count) {
 				currentHistoryOffset++;
@@ -27,5 +24,10 @@ namespace Tilde {
 			history.Add(commandString);
 			currentHistoryOffset = 0;
 		}
+		
+		//////////////////////////////////////////////////
+		
+		List<string> history = new List<string>();
+		int currentHistoryOffset;
 	}
 }

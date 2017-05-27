@@ -5,31 +5,44 @@ using System.Collections;
 
 namespace Tilde {
 	public class DrawerConsole : MonoBehaviour {
-		#region Fields.
-		// Config.
-		public const float height = 500.0f;
+		[SerializeField] float height = 500.0f;
 
-		public Console console;
+		[SerializeField] Console console;
 
-		// GUI elements.
-		public GameObject consoleWindow;
-		public Text consoleText;
-		public Scrollbar scrollbar;
-		public InputField commandInput;
+		[Header("GUI elements")]
+		[SerializeField] GameObject consoleWindow;
+		[SerializeField] Text consoleText;
+		[SerializeField] InputField commandInput;
+		
+		//////////////////////////////////////////////////
+		
+		public void SubmitText() {
+			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work
+			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove
+			// them to get the raw command.
+			string strippedText = Regex.Replace(commandInput.text, @"\n", "");
+			if (strippedText != "") {
+				console.RunCommand(strippedText);
+			}
+
+			// Clear and re-select the input field.
+			commandInput.text = "";
+			commandInput.Select();
+			commandInput.ActivateInputField();
+		}
+		
+		//////////////////////////////////////////////////
 
 		// Whether or not pressing tilde will cause the console to animate to hidden or animate to shown.
-		bool shown = false;
+		bool shown;
 
-		bool Visible {
-			get {
-				return consoleWindow != null && consoleWindow.gameObject.activeSelf;
-			}
-		}
-		#endregion
+		bool Visible { get { return consoleWindow != null && consoleWindow.activeSelf; } }
+		
+		//////////////////////////////////////////////////
 
 		#region MonoBehaviour
 		void Awake() {
-			(consoleWindow.transform as RectTransform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+			((RectTransform)consoleWindow.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);
 			console.Changed.AddListener(UpdateLogContent);
 			UpdateLogContent(console.Content);
@@ -63,7 +76,7 @@ namespace Tilde {
 					// Autocomplete
 					string partialCommand = commandInput.text.Replace("\t", "");
 					commandInput.text = partialCommand;
-					partialCommand.TrimStart();
+					partialCommand = partialCommand.TrimStart();
 
 					if (partialCommand.Trim() != "") {
 						string result = console.Autocomplete(partialCommand);
@@ -96,13 +109,12 @@ namespace Tilde {
 		}
 		#endregion
 
-		#region Coroutines
 		IEnumerator Show() {
 			consoleWindow.SetActive(true);
 			commandInput.ActivateInputField();
 			commandInput.Select();
 			float startTime = Time.time;
-			float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
+			float currentPosition = ((RectTransform)consoleWindow.transform).anchoredPosition.y;
 			while (currentPosition > -height + 4) {
 				currentPosition = Mathf.Lerp(currentPosition, -height, Time.time - startTime);
 				SetConsoleY(currentPosition);
@@ -113,7 +125,7 @@ namespace Tilde {
 
 		IEnumerator Hide() {
 			float startTime = Time.time;
-			float currentPosition = (consoleWindow.transform as RectTransform).anchoredPosition.y;
+			float currentPosition = ((RectTransform)consoleWindow.transform).anchoredPosition.y;
 			while (currentPosition < height - 4) {
 				currentPosition = Mathf.Lerp(currentPosition, height, Time.time - startTime);
 
@@ -124,38 +136,16 @@ namespace Tilde {
 
 			consoleWindow.SetActive(false);
 		}
-		#endregion
 
-		#region Private methods.
 		void SetConsoleY(float y) {
-			RectTransform consoleWindowRectTransform = (consoleWindow.transform as RectTransform);
-			Vector2 pos = consoleWindowRectTransform.anchoredPosition;
+			var consoleWindowRectTransform = (RectTransform)consoleWindow.transform;
+			var pos = consoleWindowRectTransform.anchoredPosition;
 			pos.y = y;
 			consoleWindowRectTransform.anchoredPosition = pos;
 		}
-		#endregion
 
-		#region UI Events.
-		public void SubmitText() {
-			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work
-			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove
-			// them to get the raw command.
-			string strippedText = Regex.Replace(commandInput.text, @"\n", "");
-			if (strippedText != "") {
-				console.RunCommand(strippedText);
-			}
-
-			// Clear and re-select the input field.
-			commandInput.text = "";
-			commandInput.Select();
-			commandInput.ActivateInputField();
-		}
-		#endregion
-
-		#region Event callbacks.
 		void UpdateLogContent(string log) {
 			consoleText.text = log;
 		}
-		#endregion
 	}
 }

@@ -3,28 +3,19 @@ using System.Linq;
 
 namespace Tilde {
 	public class Autocompleter {
-        #region Fields.
-        /// The original string we're completing.
-        string partial = "";
-
-		int currentCompletionOffset = 0;
-		IEnumerable<string> options;
-        #endregion
-
-        public Autocompleter(IEnumerable<string> options) {
+		public Autocompleter(IEnumerable<string> options) {
 			this.options = options;
 		}
 
-        #region public methods
-        public string Complete(string partialSelection) {
+		public string Complete(string partialSelection) {
 			if (partialSelection.StartsWith(partial) && currentCompletionOffset > 0) {
 				partialSelection = partial;
 			} else {
 				partial = partialSelection;
 				currentCompletionOffset = 0;
 			}
-			var matches = options.Where(x => x.StartsWith(partialSelection));
-			int count = matches.Count();
+			var matches = options.Where(x => x.StartsWith(partialSelection)).ToList();
+			int count = matches.Count;
 			if (!matches.Contains(partialSelection)) {
 				count++;
 			}
@@ -40,6 +31,13 @@ namespace Tilde {
 			currentCompletionOffset = 0;
 			partial = "";
 		}
-        #endregion
-    }
+
+		//////////////////////////////////////////////////
+
+		/// The original string we're completing.
+		string partial = "";
+
+		int currentCompletionOffset;
+		IEnumerable<string> options;
+	}
 }
