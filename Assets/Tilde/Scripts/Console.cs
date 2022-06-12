@@ -8,19 +8,18 @@ using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace Tilde {
-	[CreateAssetMenu(fileName = "Console", menuName = "Tilde/Console", order = 1)]
-	public class Console : ScriptableObject {
+	public class Console : MonoBehaviour {
 		#region Types
 		/// Callback type for Console.Changed events.
 		public class OnChangeCallback : UnityEvent<string> {}
 
 		// Registering commands
 		delegate string CommandAction(params string[] args);
+		delegate void SilentCommandAction(params string[] args);
 		delegate string SimpleCommandAction();
-		delegate void SilentCommandAction(string[] args);
 		delegate void SimpleSilentCommandAction();
 
-		class CommandEntry {
+		class RegisteredCommand {
 			public string Docs;
 			public CommandAction Action;
 			public Autocompleter[] Completers;
@@ -29,37 +28,39 @@ namespace Tilde {
 		
 		//////////////////////////////////////////////////
 
-		[SerializeField] bool ShowUnityLogMessages = true;
+		[SerializeField] bool showUnityLogMessages = true;
 
 		[Header("Output Styling")]
-		[SerializeField] Color LogColor = new Color(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f);
-		[SerializeField] Color WarningColor = new Color(181.0f / 255.0f, 137.0f / 255.0f, 0);
-		[SerializeField] Color ErrorColor = new Color(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f);
+		[SerializeField] Color logColor = new(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f); // #586ED7
+		[SerializeField] Color warningColor = new(181.0f / 255.0f, 137.0f / 255.0f, 0); // #B58900
+		[SerializeField] Color errorColor = new(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f); // #DC322F
 		
 		//////////////////////////////////////////////////
 
 		/// The complete console command execution history.
-		public ConsoleHistory History = new ConsoleHistory();
+		public readonly List<string> History = new();
 
 		/// The Console command autocompleter.
 		public Autocompleter Completer;
 
-		public BoundCommands KeyBindings = new BoundCommands();
+		public readonly BoundCommands KeyBindings = new();
 
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
-		public OnChangeCallback Changed = new OnChangeCallback();
+		public readonly OnChangeCallback Changed = new();
 
 		/// The full console log string.
-		public string Content { get { return logContent.ToString(); } }
+		public string Content => logScrollback.ToString();
 		
+		//////////////////////////////////////////////////
+
 		/// <summary>
 		/// Print a string to the console window.  Appears as if it was command output.
 		/// </summary>
 		/// <param name="message">The text to print.</param>
 		public void OutputStringToConsole(string message) {
-			logContent.Append("\n");
-			logContent.Append(message);
-			Changed.Invoke(logContent.ToString());
+			logScrollback.Append("\n");
+			logScrollback.Append(message);
+			Changed.Invoke(Content);
 		}
 
 		/// <summary>
@@ -67,15 +68,24 @@ namespace Tilde {
 		/// </summary>
 		/// <param name="command">The complete command string, including any arguments.</param>
 		public void RunCommand(string command) {
-			logContent.Append("\n> ");
-			logContent.Append(command);
+			logScrollback.Append("\n> ");
+			
+			if (string.IsNullOrEmpty(command)) {
+				Changed.Invoke(Content);
+				return;
+			}
+
+			logScrollback.Append(command);
+			logScrollback.Append("\n");
 			// Inform the UI that the console text has changed so it can redraw,
 			// in case the command takes a while to execute.
-			Changed.Invoke(logContent.ToString());
-			History.AddCommandToHistory(command);
-			logContent.Append("\n");
-			logContent.Append(SilentlyRunCommand(command));
-			Changed.Invoke(logContent.ToString());
+			Changed.Invoke(Content);
+			
+			History.Add(command);
+			currentHistoryOffset = 0;
+			
+			logScrollback.Append(SilentlyRunCommand(command));
+			Changed.Invoke(Content);
 		}
 
 		/// <summary>
@@ -85,15 +95,14 @@ namespace Tilde {
 		public string SilentlyRunCommand(string commandString) {
 			string[] splitCommand = commandString.Split(' ');
 			string commandName = splitCommand[0];
-			CommandEntry command;
-			if (commandMap.TryGetValue(commandName, out command)) {
+			if (registeredCommands.TryGetValue(commandName, out var command)) {
 				try {
 					return command.Action(splitCommand.Skip(1).ToArray());
 				} catch (Exception e) {
-					OutputFormatted(e.Message, ErrorColor);
+					OutputFormatted(e.Message, errorColor);
 				}
 			} else {
-				OutputFormatted("Unknown command: " + commandName, ErrorColor);
+				OutputFormatted("Unknown command: " + commandName, errorColor);
 			}
 			return "";
 		}
@@ -107,41 +116,60 @@ namespace Tilde {
 				// Remove the \t
 				partialCommand = partialCommand.Substring(0, partialCommand.Length - 1);
 			}
-			var parameters = partialCommand.Split(new [] {' '}, StringSplitOptions.RemoveEmptyEntries);
+			string[] parameters = partialCommand.Split(new [] {' '}, StringSplitOptions.RemoveEmptyEntries);
 
 			if (parameters.Length == 1 && !partialCommand.EndsWith(" ")) {
 				return Completer.Complete(partialCommand);
 			}
 
-			if (commandMap.ContainsKey(parameters[0])) {
+			if (registeredCommands.ContainsKey(parameters[0])) {
 				int lastIndex = parameters.Length - 1;
 				if (partialCommand.EndsWith(" ")) {
 					lastIndex++;
 				}
 
-				var completers = commandMap[parameters[0]].Completers;
-				if (completers.Length > lastIndex) {
-					if (completers[lastIndex] != null) {
-						string lastParam = lastIndex < parameters.Length ? parameters[lastIndex] : "";
-						string completion = completers[lastIndex].Complete(lastParam);
-						if (lastParam == "") {
-							return partialCommand + completion;
-						}
-						return partialCommand.Substring(0, partialCommand.Length - lastParam.Length) + completion;
+				var completers = registeredCommands[parameters[0]].Completers;
+				if (completers.Length > lastIndex && completers[lastIndex] != null) {
+					string lastParam = lastIndex < parameters.Length ? parameters[lastIndex] : "";
+					string completion = completers[lastIndex].Complete(lastParam);
+					if (lastParam == "") {
+						return partialCommand + completion;
 					}
+					return partialCommand[..^lastParam.Length] + completion;
 				}
 			}
 			return partialCommand;
 		}
 
 		public void SaveToFile(string filePath) {
-			var lines = Regex.Replace(logContent.ToString(), "<.*?>", string.Empty).Split('\n');
-			System.IO.File.WriteAllLines(filePath, lines);
+			string contents = Regex.Replace(Content, "<.*?>", string.Empty);
+			System.IO.File.WriteAllText(filePath, contents);
 		}
+		
+		#region History
+		// TODO (graham): These suck
+		public string TryGetPreviousCommand() {
+			if (currentHistoryOffset < History.Count) {
+				currentHistoryOffset++;
+				return History[^currentHistoryOffset];
+			}
+			return null;
+		}
+
+		public string TryGetNextCommand() {
+			if (currentHistoryOffset > 0) {
+				currentHistoryOffset--;
+				if (currentHistoryOffset != 0) {
+					return History[^currentHistoryOffset];
+				}
+			}
+			return null;
+		}
+		#endregion
 
 		//////////////////////////////////////////////////
 
-		const string StartingText = @"
+		const string STARTING_TEXT = @"
   ___  _   __         ___       __            ___  _
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
 /\_/\__// \ \  _\/\_\\//\ \    \_\ \     __ /\_/\__//
@@ -151,47 +179,42 @@ namespace Tilde {
               \/__/ \/_/\/____/\/__,_ /\/____/
 
 To view available commands, type 'help'";
-
-		static Dictionary<string, CommandEntry> commandMap = new Dictionary<string, CommandEntry>();
-
-		// Log scrollback.
-		StringBuilder logContent;
+		
+		static readonly Dictionary<string, RegisteredCommand> registeredCommands = new();
+		readonly StringBuilder logScrollback = new();
+		int currentHistoryOffset;
 
 		//////////////////////////////////////////////////
 
-		#region ScriptableObject
-		void OnEnable() {
+		#region MonoBehavior
+		void Awake() {
 			// Listen for Debug.Log calls.
-			Application.logMessageReceived += Log;
-
+			Application.logMessageReceived += OnUnityLogMessage;
+			
+			logScrollback.Append(STARTING_TEXT);
+			RegisterCommands();
+			
 			// Add a few special commands
-			commandMap["help"] = new CommandEntry() {
+			registeredCommands["help"] = new RegisteredCommand {
 				Docs = "View available commands as well as their documentation.",
 				Action = Help
 			};
-			commandMap["Bind"] = new CommandEntry() {
-				Docs = "Syntax: 'Bind <key> <command>' Bind a console command to a key.",
+			registeredCommands["bind"] = new RegisteredCommand {
+				Docs = "Syntax: 'bind <key> <command>' Bind a console command to a key.",
 				Action = KeyBindings.Bind
 			};
-			commandMap["Unbind"] = new CommandEntry() {
-				Docs = "Syntax: 'Unbind <key>' Unbind a console comand from a key.",
+			registeredCommands["unbind"] = new RegisteredCommand {
+				Docs = "Syntax: 'unbind <key>' Unbind a console command from a key.",
 				Action = KeyBindings.Unbind
 			};
-
-			FindCommands(true);
-			Completer = new Autocompleter(commandMap.Keys);
-
-			logContent = new StringBuilder();
-			logContent.Append(StartingText);
+			
+			Completer = new Autocompleter(registeredCommands.Keys);
+		}
+		
+		void OnDestroy() {
+			Application.logMessageReceived -= OnUnityLogMessage;
 		}
 		#endregion
-
-#if UNITY_EDITOR
-		[UnityEditor.Callbacks.DidReloadScripts]
-		static void OnScriptsReloaded() {
-			FindCommands();
-		}
-#endif
 
 		/// <summary>
 		/// Special command for listing command help
@@ -206,11 +229,11 @@ To view available commands, type 'help'";
 
 			if (options.Length == 0) {
 				// Show help for everything.
-				int maxCommandLength = commandMap.Keys.Select(x => x.Length).Max();
+				int maxCommandLength = registeredCommands.Keys.Select(x => x.Length).Max();
 				int docsColumnPadding = COMMAND_INDENT + maxCommandLength + COMMAND_DOCSTRING_PADDING;
 
 				helpText.AppendLine("Available commands:");
-				foreach (var commandEntry in commandMap.OrderBy(x => x.Key)) {
+				foreach (var commandEntry in registeredCommands.OrderBy(x => x.Key)) {
 					string command = commandEntry.Key;
 					string docstring = commandEntry.Value.Docs;
 
@@ -218,151 +241,133 @@ To view available commands, type 'help'";
 					helpText.AppendLine();
 					helpText.Append(new string(' ', COMMAND_INDENT));
 					helpText.Append(command);
-					helpText.Append(new string(' ', (maxCommandLength - command.Length) + COMMAND_DOCSTRING_PADDING));
+					helpText.Append(new string(' ', maxCommandLength - command.Length + COMMAND_DOCSTRING_PADDING));
 
 					// Add the docstring, wrapping and aligning to the column if necessary.
 					int docsColumnSize = LINE_WIDTH - COMMAND_INDENT - maxCommandLength - COMMAND_DOCSTRING_PADDING;
-					if (docsColumnSize > 0) {
-						bool padOutNewLine = false;
-						while (docsColumnSize < docstring.Length) {
-							if (padOutNewLine) {
-								helpText.AppendLine();
-								helpText.Append(new string(' ', docsColumnPadding));
-							}
-							helpText.Append(docstring.Substring(0, docsColumnSize));
-							docstring = docstring.Substring(docsColumnSize);
-							padOutNewLine = true;
-						}
-
-						if (!string.IsNullOrEmpty(docstring)) {
-							if (padOutNewLine) {
-								helpText.AppendLine();
-								helpText.Append(new string(' ', docsColumnPadding));
-							}
-							helpText.Append(docstring);
-						}
+					if (docsColumnSize <= 0) {
+						continue;
 					}
+					bool padOutNewLine = false;
+					while (docsColumnSize < docstring.Length) {
+						if (padOutNewLine) {
+							helpText.AppendLine();
+							helpText.Append(new string(' ', docsColumnPadding));
+						}
+						helpText.Append(docstring[..docsColumnSize]);
+						docstring = docstring[docsColumnSize..];
+						padOutNewLine = true;
+					}
+
+					if (string.IsNullOrEmpty(docstring)) {
+						continue;
+					}
+					if (padOutNewLine) {
+						helpText.AppendLine();
+						helpText.Append(new string(' ', docsColumnPadding));
+					}
+					helpText.Append(docstring);
 				}
 			} else {
 				// Show help for a specific command.
-				CommandEntry command;
-				if (commandMap.TryGetValue(options[0], out command)) {
+				if (registeredCommands.TryGetValue(options[0], out var command)) {
 					helpText.Append(command.Docs);
 				} else {
-					OutputFormatted("Command not found: " + options[0], ErrorColor);
+					OutputFormatted("Command not found: " + options[0], errorColor);
 				}
 			}
 			return helpText.ToString();
 		}
 
-		void Log(string message, string stackTrace, LogType type) {
-			if (ShowUnityLogMessages && !string.IsNullOrEmpty(message)) {
-				switch (type) {
+		/// Event handler for Unity's LogMessageReceived event 
+		void OnUnityLogMessage(string message, string stackTrace, LogType type) {
+			if (!showUnityLogMessages || string.IsNullOrEmpty(message)) {
+				return;
+			}
+			
+			switch (type) {
 				case LogType.Assert:
 				case LogType.Error:
 				case LogType.Exception:
-					OutputFormatted(message, ErrorColor);
+					OutputFormatted(message, errorColor);
 					break;
 				case LogType.Warning:
-					OutputFormatted(message, WarningColor);
+					OutputFormatted(message, warningColor);
 					break;
 				case LogType.Log:
-					OutputFormatted(message, LogColor);
+					OutputFormatted(message, logColor);
 					break;
-				}
+				default:
+					throw new ArgumentOutOfRangeException(nameof(type), type, null);
 			}
 		}
 
 		void OutputFormatted(string message, Color color) {
-			logContent.Append("\n<color=");
-			logContent.Append(String.Format("#{0:X2}{1:X2}{2:X2}{3:X2}",
+			logScrollback.Append(string.Format("<color=#{0:X2}{1:X2}{2:X2}{3:X2}>{4}</color>",
 				Mathf.RoundToInt(color.r * 255),
 				Mathf.RoundToInt(color.g * 255),
 				Mathf.RoundToInt(color.b * 255),
-				Mathf.RoundToInt(color.a * 255)));
-			logContent.Append(">");
-			logContent.Append(message);
-			logContent.Append("</color>");
-			Changed.Invoke(logContent.ToString());
+				Mathf.RoundToInt(color.a * 255),
+				message));
+			Changed.Invoke(Content);
 		}
 
-		static void FindCommands(bool silently = false) {
-			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-				// Skip non-user assemblies.
-				if (!assembly.GetName().Name.StartsWith("Assembly")) {
+		/// Finds and registers all annotated functions in all assemblies.
+		static void RegisterCommands() {
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+				// Try to skip system assemblies
+				if (assembly.FullName.StartsWith("System") || assembly.FullName.StartsWith("mscorlib") || assembly.FullName.StartsWith("Unity") || assembly.FullName.StartsWith("Mono")) {
 					continue;
 				}
 
-				foreach (Type type in assembly.GetTypes()) {
-					foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
-						ConsoleCommand[] commandAttrs = method.GetCustomAttributes(typeof(ConsoleCommand), true) as ConsoleCommand[];
-						if (commandAttrs == null || commandAttrs.Length == 0) {
+				foreach (var type in assembly.GetTypes()) {
+					foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)) {
+						// Only find annotated static methods.
+						var commandAttribute = method.GetCustomAttribute<ConsoleCommandAttribute>();
+						if (commandAttribute == null) {
 							continue;
 						}
-
 						if (!method.IsStatic) {
-							if (!silently) {
-								Debug.LogError(string.Format(
-									"Tilde: Method {0}.{1} must be static to be registered as a console command.",
-									type, method.Name));
-							}
+							Debug.LogError($"[Tilde] Method {type}.{method.Name} must be static to be registered as a console command.");
 							continue;
 						}
 
-						CommandAction action = Delegate.CreateDelegate(typeof(CommandAction), method, false) as CommandAction;
-						if (action == null) {
-							SimpleCommandAction simpleAction = Delegate.CreateDelegate(typeof(SimpleCommandAction), method, false) as SimpleCommandAction;
-							if (simpleAction != null) {
-								action = _ => simpleAction();
-							} else {
-								SilentCommandAction silentAction = Delegate.CreateDelegate(typeof(SilentCommandAction), method, false) as SilentCommandAction;
-								if (silentAction != null) {
-									action = args => { silentAction(args); return ""; };
-								} else {
-									SimpleSilentCommandAction simpleSilentAction = Delegate.CreateDelegate(typeof(SimpleSilentCommandAction), method, false) as SimpleSilentCommandAction;
-									if (simpleSilentAction != null) {
-										action = args => { simpleSilentAction(); return ""; };
-									}
-								}
-							}
-						}
-
-						if (action == null) {
-							if (!silently) {
-								Debug.LogError(string.Format(
-									"Tilde: Method {0}.{1} is the wrong type.  It must take either no argumets, or just " +
-									"an array of strings, and its return type must be string or void.", type, method.Name));
-							}
+						// Determine if it's a valid signature and distill it to a common type
+						CommandAction action;
+						if (Delegate.CreateDelegate(typeof(CommandAction), method, false) is CommandAction commandAction) {
+							action = commandAction;
+						} else if (Delegate.CreateDelegate(typeof(SimpleCommandAction), method, false) is SimpleCommandAction simpleAction) {
+							action = _ => simpleAction();
+						} else if (Delegate.CreateDelegate(typeof(SilentCommandAction), method, false) is SilentCommandAction silentAction) {
+							action = args => { silentAction(args); return string.Empty; };
+						} else if (Delegate.CreateDelegate(typeof(SimpleSilentCommandAction), method, false) is SimpleSilentCommandAction simpleSilentAction) {
+							action = _ => { simpleSilentAction(); return string.Empty; };
+						} else {
+							Debug.LogError($"[Tilde] Method {type}.{method.Name} is annotated as a command but does not have a valid signature.");
 							continue;
 						}
 
-						Completion[] completionAttrs = method.GetCustomAttributes(typeof(Completion), true) as Completion[];
-						Autocompleter[] completers = null;
-						if (completionAttrs != null) {
+						// Find and record any completion attributes
+						Autocompleter[] autocompleters = null;
+						if (method.GetCustomAttributes(typeof(CompletionAttribute), true) is CompletionAttribute[] completionAttributes) {
 							int maxArgIndex = -1;
-							foreach (var completion in completionAttrs) {
+							foreach (var completion in completionAttributes) {
 								maxArgIndex = Math.Max(completion.ArgIndex, maxArgIndex);
 							}
+							
 							if (maxArgIndex >= 0) {
-								completers = new Autocompleter[maxArgIndex + 1];
-
-								for (int i = 0; i < completionAttrs.Length; ++i) {
-									var completion = completionAttrs[i];
-									completers[completion.ArgIndex] = new Autocompleter(completion.Options);
+								autocompleters = new Autocompleter[maxArgIndex + 1];
+								foreach (var completion in completionAttributes) {
+									autocompleters[completion.ArgIndex] = new Autocompleter(completion.Options);
 								}
 							}
 						}
 
-						string command = commandAttrs[0].CommandName;
-						if (string.IsNullOrEmpty(command)) {
-							command = method.Name;
-						}
-						string docs = commandAttrs[0].Docstring ?? "";
-
-						commandMap[command] = new CommandEntry() {
-							Docs = docs,
+						string commandName = !string.IsNullOrEmpty(commandAttribute.CommandName) ? commandAttribute.CommandName : method.Name;
+						registeredCommands[commandName] = new RegisteredCommand {
+							Docs = commandAttribute.Docstring,
 							Action = action,
-							Completers = completers
+							Completers = autocompleters
 						};
 					}
 				}
@@ -371,7 +376,7 @@ To view available commands, type 'help'";
 	}
 
 	public class BoundCommands {
-		public Dictionary<KeyCode, string> bindings = new Dictionary<KeyCode, string>();
+		public readonly Dictionary<KeyCode, string> Bindings = new();
 
 		public string Bind(string[] args) {
 			if (args.Length < 2) {
@@ -380,11 +385,12 @@ To view available commands, type 'help'";
 			}
 
 			var key = KeyCodeFromString(args[0]);
-			if (key != KeyCode.None) {
-				string command = string.Join(" ", args.Skip(1).ToArray());
-				bindings[key] = command;
+			if (key == KeyCode.None) {
+				return string.Empty;
 			}
-			return "";
+			string command = string.Join(" ", args.Skip(1).ToArray());
+			Bindings[key] = command;
+			return string.Empty;
 		}
 
 		public string Unbind(string[] args) {
@@ -395,7 +401,7 @@ To view available commands, type 'help'";
 
 			var key = KeyCodeFromString(args[0]);
 			if (key != KeyCode.None) {
-				bindings.Remove(key);
+				Bindings.Remove(key);
 			}
 			return "";
 		}

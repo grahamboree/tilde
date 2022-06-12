@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Tilde</title>
+  <style>
+    body {
+      height: 99%;
+      font-size: 14px;
+      font-family: monospace;
+      background-color: #383838;
+      color: #F0F0F0;
+    }
+
+    #output {
+      height: 100%;
+      width: 100%;
+      overflow-y: auto;
+      overflow-x: auto;
+      white-space: pre;
+      word-wrap: break-word;
+    }
+
+    #input {
+      bottom: 0px;
+      left: 10px;
+      right: 10px;
+      /* width: 100%; */
+      resize: none;
+      position: fixed;
+      background-color: #383838;
+      color: #F0F0F0;
+    }
+
+    span.Warning {
+      color: #f4e542;
+    }
+
+    span.Assert {
+      color: #f4e542;
+    }
+
+    span.Error {
+      color: #ff0000;
+    }
+
+    span.Exception {
+      color: #ff0000;
+    }
+
+    span.Help {
+      color: #16f3ff;
+    }
+
+    #pauseUpdates {
+      width: 150px;
+      height: 40px;
+      position: fixed;
+      top: 10px;
+      right: 50px;
+      opacity: .5;
+    }
+  </style>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script>
+    var commandIndex = -1;
+    var hash = null;
+    var isUpdatePaused = false;
+
+    function scrollBottom() {
+      $('html').scrollTop($('html')[0].scrollHeight);
+    }
+
+    function runCommand(command) {
+      scrollBottom();
+      $.get("console/run?command=" + encodeURI(encodeURIComponent(command)), function (data, status) {
+        updateConsole(function () {
+          updateCommand(commandIndex - 1);
+        });
+      });
+      resetInput();
+    }
+
+    function updateConsole(callback) {
+      if (isUpdatePaused) {
+        return;
+      }
+      $.get("console/out", function (data, status) {
+        // Check if we are scrolled to the bottom to force scrolling on update
+        var html = $('html')[0];
+        var shouldScroll = Math.abs(html.scrollHeight - html.scrollTop - html.clientHeight) < 5;
+
+        $('#output').html(String(data).replace(/\n|\r/g, '<br>') + "<br><br><br>");
+        if (callback) {
+          callback();
+        }
+        if (shouldScroll) {
+          scrollBottom();
+        }
+      });
+    }
+
+    function resetInput() {
+      commandIndex = -1;
+      $("#input").val("");
+    }
+
+    function previousCommand() {
+      updateCommand(commandIndex + 1);
+    }
+
+    function nextCommand() {
+      updateCommand(commandIndex - 1);
+    }
+
+    function updateCommand(index) {
+      // Check if we are at the defualt index and clear the input
+      if (index < 0) {
+        resetInput();
+        return;
+      }
+
+      $.get("console/commandHistory?index=" + index, function (data, status) {
+        if (data) {
+          commandIndex = index;
+          $("#input").val(String(data));
+        }
+      });
+    }
+
+    function complete(command) {
+      $.get("console/complete?command=" + command, function (data, status) {
+        if (data) {
+          $("#input").val(String(data));
+        }
+      });
+    }
+
+    // Poll to update the console output
+    window.setInterval(function () { updateConsole(null) }, 500);
+  </script>
+</head>
+
+<body>
+  <button id="pauseUpdates">Pause Updates</button>
+  <div id="output"></div>
+  <textarea id="input" autofocus rows="1"></textarea>
+
+  <script>
+    // setup our pause updates button
+    $("#pauseUpdates").click(function () {
+      isUpdatePaused = !isUpdatePaused;
+      $("#pauseUpdates").html(isUpdatePaused ? "Resume Updates" : "Pause Updates");
+    });
+
+    $("#input").keydown(function (e) {
+      if (e.keyCode == 13) { // Enter
+        // we don't want a line break in the console
+        e.preventDefault();
+        runCommand($("#input").val());
+      } else if (e.keyCode == 38) { // Up
+        previousCommand();
+      } else if (e.keyCode == 40) { // Down
+        nextCommand();
+      } else if (e.keyCode == 27) { // Escape
+        resetInput();
+      } else if (e.keyCode == 9) { // Tab
+        e.preventDefault();
+        complete($("#input").val());
+      }
+    });
+  </script>
+</body>
+
+</html>

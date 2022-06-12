@@ -17,8 +17,7 @@ namespace Tilde {
 				return;
 			}
 
-			Vector2 localPointerPosition;
-			if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRectTransform, data.position, data.pressEventCamera, out localPointerPosition)) {
+			if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRectTransform, data.position, data.pressEventCamera, out var localPointerPosition)) {
 				Vector3 offsetToOriginal = localPointerPosition - originalLocalPointerPosition;
 				panelRectTransform.localPosition = originalPanelLocalPosition + offsetToOriginal;
 			}

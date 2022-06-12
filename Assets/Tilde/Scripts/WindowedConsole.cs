@@ -7,15 +7,13 @@ namespace Tilde {
 		public Console console;
 		public GameObject consoleWindow;
 		public Text consoleText;
-		public Scrollbar scrollbar;
 		public InputField commandInput;
 
-		bool Visible { get { return consoleWindow != null && consoleWindow.gameObject.activeSelf; } }
+		bool Visible => consoleWindow != null && consoleWindow.gameObject.activeSelf;
 
 		#region MonoBehaviour
 		void Awake() {
 			console.Changed.AddListener(UpdateLogContent);
-			UpdateLogContent(console.Content);
 		}
 
 		void Update() {
@@ -24,6 +22,7 @@ namespace Tilde {
 				bool visible = !consoleWindow.activeSelf;
 				consoleWindow.gameObject.SetActive(visible);
 				if (visible) {
+					UpdateLogContent(console.Content);
 					commandInput.ActivateInputField();
 					commandInput.Select();
 				}
@@ -34,13 +33,13 @@ namespace Tilde {
 				if (Input.GetKeyDown(KeyCode.Return)) {
 					SubmitText();
 				} else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-					string previous = console.History.TryGetPreviousCommand();
+					string previous = console.TryGetPreviousCommand();
 					if (previous != null) {
 						commandInput.text = previous;
 						commandInput.MoveTextEnd(false);
 					}
 				} else if (Input.GetKeyDown(KeyCode.DownArrow)) {
-					string next = console.History.TryGetNextCommand();
+					string next = console.TryGetNextCommand();
 					if (next != null) {
 						commandInput.text = next;
 						commandInput.MoveTextEnd(false);
@@ -69,7 +68,7 @@ namespace Tilde {
 
 			// Run any bound commands triggered this frame.
 			if (!commandInput.isFocused) {
-				foreach (var boundCommand in console.KeyBindings.bindings) {
+				foreach (var boundCommand in console.KeyBindings.Bindings) {
 					if (Input.GetKeyDown(boundCommand.Key)) {
 						console.RunCommand(boundCommand.Value);
 					}
@@ -87,11 +86,8 @@ namespace Tilde {
 			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
 			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 
 			// them to get the raw command.
-			string strippedText = Regex.Replace(commandInput.text, @"\n", "");
-			if (strippedText != "") {
-				console.RunCommand(strippedText);
-			}
-
+			console.RunCommand(Regex.Replace(commandInput.text, @"\n", ""));
+			
 			// Clear and re-select the input field.
 			commandInput.text = "";
 			commandInput.Select();

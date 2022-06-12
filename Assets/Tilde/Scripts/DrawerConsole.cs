@@ -9,7 +9,7 @@ namespace Tilde {
 
 		[SerializeField] Console console;
 
-		[Header("GUI elements")]
+		[Header("UI elements")]
 		[SerializeField] GameObject consoleWindow;
 		[SerializeField] Text consoleText;
 		[SerializeField] InputField commandInput;
@@ -20,11 +20,8 @@ namespace Tilde {
 			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work
 			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove
 			// them to get the raw command.
-			string strippedText = Regex.Replace(commandInput.text, @"\n", "");
-			if (strippedText != "") {
-				console.RunCommand(strippedText);
-			}
-
+			console.RunCommand(Regex.Replace(commandInput.text, @"\n", ""));
+			
 			// Clear and re-select the input field.
 			commandInput.text = "";
 			commandInput.Select();
@@ -36,15 +33,19 @@ namespace Tilde {
 		// Whether or not pressing tilde will cause the console to animate to hidden or animate to shown.
 		bool shown;
 
-		bool Visible { get { return consoleWindow != null && consoleWindow.activeSelf; } }
-		
+		bool Visible => consoleWindow != null && consoleWindow.activeSelf;
+
 		//////////////////////////////////////////////////
 
 		#region MonoBehaviour
 		void Awake() {
 			((RectTransform)consoleWindow.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);
+			
 			console.Changed.AddListener(UpdateLogContent);
+		}
+
+		void OnEnable() {
 			UpdateLogContent(console.Content);
 		}
 
@@ -61,13 +62,13 @@ namespace Tilde {
 				if (Input.GetKeyDown(KeyCode.Return)) {
 					SubmitText();
 				} else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-					string previous = console.History.TryGetPreviousCommand();
+					string previous = console.TryGetPreviousCommand();
 					if (previous != null) {
 						commandInput.text = previous;
 						commandInput.MoveTextEnd(false);
 					}
 				} else if (Input.GetKeyDown(KeyCode.DownArrow)) {
-					string next = console.History.TryGetNextCommand();
+					string next = console.TryGetNextCommand();
 					if (next != null) {
 						commandInput.text = next;
 						commandInput.MoveTextEnd(false);
@@ -96,7 +97,7 @@ namespace Tilde {
 
 			// Run any bound commands triggered this frame.
 			if (!commandInput.isFocused) {
-				foreach (var boundCommand in console.KeyBindings.bindings) {
+				foreach (var boundCommand in console.KeyBindings.Bindings) {
 					if (Input.GetKeyDown(boundCommand.Key)) {
 						console.RunCommand(boundCommand.Value);
 					}
@@ -110,6 +111,7 @@ namespace Tilde {
 		#endregion
 
 		IEnumerator Show() {
+			UpdateLogContent(console.Content);
 			consoleWindow.SetActive(true);
 			commandInput.ActivateInputField();
 			commandInput.Select();

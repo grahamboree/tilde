@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 
 namespace Tilde {
 	public class Resize : MonoBehaviour, IPointerDownHandler, IDragHandler {
-		public Vector2 minSize = new Vector2(100, 100);
+		public Vector2 minSize = new(100, 100);
 		public RectTransform panelRectTransform;
 		Vector2 originalLocalPointerPosition;
 		Vector2 originalSizeDelta;
@@ -18,8 +18,7 @@ namespace Tilde {
 				return;
 			}
 
-			Vector2 localPointerPosition;
-			RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRectTransform, data.position, data.pressEventCamera, out localPointerPosition);
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRectTransform, data.position, data.pressEventCamera, out var localPointerPosition);
 
 			Vector3 offsetToOriginal = localPointerPosition - originalLocalPointerPosition;
 

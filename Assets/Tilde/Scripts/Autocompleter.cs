@@ -38,6 +38,6 @@ namespace Tilde {
 		string partial = "";
 
 		int currentCompletionOffset;
-		IEnumerable<string> options;
+		readonly IEnumerable<string> options;
 	}
 }
