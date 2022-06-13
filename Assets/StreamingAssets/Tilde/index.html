@@ -23,13 +23,14 @@
 
     #input {
       bottom: 0px;
-      left: 10px;
-      right: 10px;
-      /* width: 100%; */
+      width: 99%;
+      margin: 0px;
+      padding: 0px;
       resize: none;
       position: fixed;
       background-color: #383838;
       color: #F0F0F0;
+      overflow-x: hidden;
     }
 
     span.Warning {
@@ -85,12 +86,12 @@
       if (isUpdatePaused) {
         return;
       }
-      $.get("console/out", function (data, status) {
+      $.get("console/out", function(data, status) {
         // Check if we are scrolled to the bottom to force scrolling on update
         var html = $('html')[0];
         var shouldScroll = Math.abs(html.scrollHeight - html.scrollTop - html.clientHeight) < 5;
 
-        $('#output').html(String(data).replace(/\n|\r/g, '<br>') + "<br><br><br>");
+        $('#output').html(String(data).replace(/\r?\n/g, '<br>') + "<br><br><br>");
         if (callback) {
           callback();
         }
