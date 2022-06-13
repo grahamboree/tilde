@@ -29,6 +29,7 @@ namespace Tilde {
 		//////////////////////////////////////////////////
 
 		[SerializeField] bool showUnityLogMessages = true;
+		[SerializeField] bool caseInsensitiveMatching = true;
 
 		[Header("Output Styling")]
 		[SerializeField] Color logColor = new(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f); // #586ED7
@@ -95,7 +96,7 @@ namespace Tilde {
 		public string SilentlyRunCommand(string commandString) {
 			string[] splitCommand = commandString.Split(' ');
 			string commandName = splitCommand[0];
-			if (registeredCommands.TryGetValue(commandName, out var command)) {
+			if (TryGetCommand(commandName, out var command)) {
 				try {
 					return command.Action(splitCommand.Skip(1).ToArray());
 				} catch (Exception e) {
@@ -215,6 +216,23 @@ To view available commands, type 'help'";
 			Application.logMessageReceived -= OnUnityLogMessage;
 		}
 		#endregion
+		
+		/// <summary>
+		/// Find the command with the given name.  Obeys case sensitivity setting when doing comparisons.
+		/// </summary>
+		/// <param name="commandName">The name to match</param>
+		/// <param name="command">The matching registered command or null if none was found</param>
+		/// <returns>True if <paramref name="commandName"/> matches a registered command (and <paramref name="command"/> is not null).  False otherwise.</returns>
+		bool TryGetCommand(string commandName, out RegisteredCommand command) {
+			foreach ((string registeredName, var registeredCommand) in registeredCommands) {
+				if (commandName.Equals(registeredName, caseInsensitiveMatching ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+					command = registeredCommand;
+					return true;
+				}
+			}
+			command = null;
+			return false;
+		}
 
 		/// <summary>
 		/// Special command for listing command help
