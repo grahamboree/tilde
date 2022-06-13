@@ -82,8 +82,8 @@ namespace Tilde {
         }
     }
 
-    public sealed class Server : MonoBehaviour {
-        [SerializeField] Console Console;
+    public sealed class TildeWebConsoleServer : MonoBehaviour {
+        [SerializeField] TildeConsole Console;
         [SerializeField] int Port = 55055;
 
         static Thread mainThread;
@@ -301,7 +301,7 @@ namespace Tilde {
                 return;
             }
             
-            var existingConsole = FindObjectOfType<Console>();
+            var existingConsole = FindObjectOfType<TildeConsole>();
             if (existingConsole != null) {
                 Console = existingConsole;
             }

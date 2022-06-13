@@ -7,7 +7,7 @@ namespace Tilde {
 	public class DrawerConsole : MonoBehaviour {
 		[SerializeField] float height = 500.0f;
 
-		[SerializeField] Console console;
+		[SerializeField] TildeConsole console;
 
 		[Header("UI elements")]
 		[SerializeField] GameObject consoleWindow;

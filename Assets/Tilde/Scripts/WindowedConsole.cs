@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Tilde {
 	public class WindowedConsole : MonoBehaviour {
-		public Console console;
+		public TildeConsole console;
 		public GameObject consoleWindow;
 		public Text consoleText;
 		public InputField commandInput;

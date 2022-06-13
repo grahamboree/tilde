@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace Tilde {
-	public class Console : MonoBehaviour {
+	public class TildeConsole : MonoBehaviour {
 		#region Types
 		/// Callback type for Console.Changed events.
 		public class OnChangeCallback : UnityEvent<string> {}
