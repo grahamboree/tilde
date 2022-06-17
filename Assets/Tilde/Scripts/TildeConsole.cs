@@ -170,6 +170,7 @@ namespace Tilde {
 
 		//////////////////////////////////////////////////
 
+		// Font face: slightly modified "Larry 3D" found here: https://patorjk.com/software/taag/#p=display&f=Larry%203D&t=~tilde~
 		const string STARTING_TEXT = @"
   ___  _   __         ___       __            ___  _
  /   \/ \ /\ \__  __ /\_ \     /\ \          /   \/ \
