@@ -8,9 +8,14 @@ namespace Tilde {
 		public GameObject consoleWindow;
 		public Text consoleText;
 		public InputField commandInput;
+		
+		//////////////////////////////////////////////////
 
 		bool Visible => consoleWindow != null && consoleWindow.gameObject.activeSelf;
+		int historyOffset;
 
+		//////////////////////////////////////////////////
+		
 		#region MonoBehaviour
 		void Awake() {
 			console.Changed.AddListener(UpdateLogContent);
@@ -31,19 +36,32 @@ namespace Tilde {
 
 			if (Visible && commandInput.isFocused) {
 				if (Input.GetKeyDown(KeyCode.Return)) {
-					SubmitText();
+					// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
+					// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 
+					// them to get the raw command.
+					console.RunCommand(Regex.Replace(commandInput.text, @"\n", ""));
+
+					// Reset the history navigation state
+					historyOffset = 0;
+			
+					// Clear and re-select the input field.
+					commandInput.text = "";
+					commandInput.Select();
+					commandInput.ActivateInputField();
 				} else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-					string previous = console.TryGetPreviousCommand();
+					string previous = console.GetCommandHistory(historyOffset + 1);
 					if (previous != null) {
+						historyOffset++;
 						commandInput.text = previous;
-						commandInput.MoveTextEnd(false);
 					}
+					commandInput.MoveTextEnd(false);
 				} else if (Input.GetKeyDown(KeyCode.DownArrow)) {
-					string next = console.TryGetNextCommand();
-					if (next != null) {
-						commandInput.text = next;
-						commandInput.MoveTextEnd(false);
+					string previous = console.GetCommandHistory(historyOffset - 1);
+					if (previous != null) {
+						historyOffset--;
+						commandInput.text = previous;
 					}
+					commandInput.MoveTextEnd(false);
 				} else if (Input.GetKeyDown(KeyCode.Tab)) {
 					// Autocomplete
 					string partialCommand = commandInput.text.Replace("\t", "");
@@ -81,24 +99,8 @@ namespace Tilde {
         }
 		#endregion
 
-		#region UI Events.
-		public void SubmitText() {
-			// Remove newlines... the UI Input Field has to be set to a multiline input field for submission to work 
-			// correctly, so when you hit enter it adds newline characters before Update() can call this function.  Remove 
-			// them to get the raw command.
-			console.RunCommand(Regex.Replace(commandInput.text, @"\n", ""));
-			
-			// Clear and re-select the input field.
-			commandInput.text = "";
-			commandInput.Select();
-			commandInput.ActivateInputField();
-		}
-		#endregion
-
-		#region Event callbacks.
 		void UpdateLogContent(string log) {
 			consoleText.text = log;
 		}
-		#endregion
 	}
 }

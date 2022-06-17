@@ -83,7 +83,6 @@ namespace Tilde {
 			Changed.Invoke(Content);
 			
 			History.Add(command);
-			currentHistoryOffset = 0;
 			
 			logScrollback.Append(SilentlyRunCommand(command));
 			Changed.Invoke(Content);
@@ -147,26 +146,9 @@ namespace Tilde {
 			System.IO.File.WriteAllText(filePath, contents);
 		}
 		
-		#region History
-		// TODO (graham): These suck
-		public string TryGetPreviousCommand() {
-			if (currentHistoryOffset < History.Count) {
-				currentHistoryOffset++;
-				return History[^currentHistoryOffset];
-			}
-			return null;
+		public string GetCommandHistory(int offset) {
+			return offset > 0 && offset <= History.Count ? History[^offset] : null;
 		}
-
-		public string TryGetNextCommand() {
-			if (currentHistoryOffset > 0) {
-				currentHistoryOffset--;
-				if (currentHistoryOffset != 0) {
-					return History[^currentHistoryOffset];
-				}
-			}
-			return null;
-		}
-		#endregion
 
 		//////////////////////////////////////////////////
 
@@ -184,7 +166,6 @@ To view available commands, type 'help'";
 		
 		static readonly Dictionary<string, RegisteredCommand> registeredCommands = new();
 		readonly StringBuilder logScrollback = new();
-		int currentHistoryOffset;
 
 		//////////////////////////////////////////////////
 
