@@ -33,24 +33,20 @@
       overflow-x: hidden;
     }
 
-    span.Warning {
-      color: #f4e542;
+    span.Normal {
+      color: #F0F0F0;
     }
 
-    span.Assert {
-      color: #f4e542;
+    span.UnityLog {
+      color: #586ED7;
+    }
+
+    span.Warning {
+      color: #B58900;
     }
 
     span.Error {
-      color: #ff0000;
-    }
-
-    span.Exception {
-      color: #ff0000;
-    }
-
-    span.Help {
-      color: #16f3ff;
+      color: #DC322F;
     }
 
     #pauseUpdates {
@@ -87,7 +83,15 @@
         var html = $('html')[0];
         var shouldScroll = Math.abs(html.scrollHeight - html.scrollTop - html.clientHeight) < 5;
 
-        $('#output').html(String(data).replace(/\r?\n/g, '<br>') + "<br><br><br>");
+        var dataStr = String(data);
+        dataStr = dataStr.replace(/\r?\n/g, '<br>');
+        ["Normal", "UnityLog", "Warning", "Error"].forEach(function(type) {
+          dataStr = dataStr.replace(new RegExp('\\[' + type + '\\]', 'g'), '<span class="' + type + '">');
+          dataStr = dataStr.replace(new RegExp('\\[\\\/' + type + '\\]', 'g'), '</span>');
+        });
+        dataStr += "<br><br><br>";
+
+        $('#output').html(dataStr);
         if (callback) {
           callback();
         }

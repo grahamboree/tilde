@@ -213,7 +213,7 @@ namespace Tilde {
             
             // Register Routes
             routes.Add(new Route(@"^/console/out$", context => {
-                context.Response.WriteString(HttpUtility.HtmlEncode(Console.Content));
+                context.Response.WriteString(HttpUtility.HtmlEncode(Console.RemoteContent));
                 return true;
             }));
             

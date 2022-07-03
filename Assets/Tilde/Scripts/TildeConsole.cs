@@ -24,6 +24,17 @@ namespace Tilde {
 			public CommandAction Action;
 			public Autocompleter[] Completers;
 		}
+
+		enum LogLineType {
+			Normal,
+			UnityLog,
+			Warning,
+			Error
+		}
+
+		class UnknownCommandException : Exception {
+			public UnknownCommandException(string command) : base("Unknown command: " + command) { }
+		}
 		#endregion
 		
 		//////////////////////////////////////////////////
@@ -31,11 +42,6 @@ namespace Tilde {
 		[SerializeField] bool showUnityLogMessages = true;
 		[SerializeField] bool caseInsensitiveMatching = true;
 
-		[Header("Output Styling")]
-		[SerializeField] Color logColor = new(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f); // #586ED7
-		[SerializeField] Color warningColor = new(181.0f / 255.0f, 137.0f / 255.0f, 0); // #B58900
-		[SerializeField] Color errorColor = new(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f); // #DC322F
-		
 		//////////////////////////////////////////////////
 
 		/// The complete console command execution history.
@@ -50,7 +56,10 @@ namespace Tilde {
 		public readonly OnChangeCallback Changed = new();
 
 		/// The full console log string.
-		public string Content => logScrollback.ToString();
+		public string Content => logScrollBack.ToString();
+		
+		/// The full console log string formatted for the remote web console.
+		public string RemoteContent => remoteLogScrollBack.ToString();
 		
 		//////////////////////////////////////////////////
 
@@ -59,9 +68,7 @@ namespace Tilde {
 		/// </summary>
 		/// <param name="message">The text to print.</param>
 		public void OutputStringToConsole(string message) {
-			logScrollback.Append("\n");
-			logScrollback.Append(message);
-			Changed.Invoke(Content);
+			AppendOutput(LogLineType.Normal, message);
 		}
 
 		/// <summary>
@@ -69,42 +76,33 @@ namespace Tilde {
 		/// </summary>
 		/// <param name="command">The complete command string, including any arguments.</param>
 		public void RunCommand(string command) {
-			logScrollback.Append("\n> ");
+			AppendOutput(LogLineType.Normal, "> " + command);
 			
 			if (string.IsNullOrEmpty(command)) {
-				Changed.Invoke(Content);
 				return;
 			}
-
-			logScrollback.Append(command);
-			logScrollback.Append("\n");
-			// Inform the UI that the console text has changed so it can redraw,
-			// in case the command takes a while to execute.
-			Changed.Invoke(Content);
 			
 			History.Add(command);
-			
-			logScrollback.Append(SilentlyRunCommand(command));
-			Changed.Invoke(Content);
+
+			try {
+				AppendOutput(LogLineType.Normal, SilentlyRunCommand(command));
+			} catch (Exception e) {
+				AppendOutput(LogLineType.Error, e.Message);
+			}
 		}
 
 		/// <summary>
 		/// Execute a console command, but do not display output in the console window.
 		/// </summary>
 		/// <param name="commandString">The complete command string, including any arguments.</param>
+		/// <exception cref="UnknownCommandException">Thrown when the command is not found</exception>
 		public string SilentlyRunCommand(string commandString) {
 			string[] splitCommand = commandString.Split(' ');
 			string commandName = splitCommand[0];
-			if (TryGetCommand(commandName, out var command)) {
-				try {
-					return command.Action(splitCommand.Skip(1).ToArray());
-				} catch (Exception e) {
-					OutputFormatted(e.Message, errorColor);
-				}
-			} else {
-				OutputFormatted("Unknown command: " + commandName, errorColor);
+			if (!TryGetCommand(commandName, out var command)) {
+				throw new UnknownCommandException(commandName);
 			}
-			return "";
+			return command.Action(splitCommand.Skip(1).ToArray());
 		}
 
 		/// <summary>
@@ -142,7 +140,7 @@ namespace Tilde {
 		}
 
 		public void SaveToFile(string filePath) {
-			string contents = Regex.Replace(Content, "<.*?>", string.Empty);
+			string contents = Regex.Replace(Content, "<color.*?>", string.Empty);
 			System.IO.File.WriteAllText(filePath, contents);
 		}
 		
@@ -164,17 +162,23 @@ namespace Tilde {
 
 To view available commands, type 'help'";
 		
+		static readonly Color logColor = new(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f); // #586ED7
+		static readonly Color warningColor = new(181.0f / 255.0f, 137.0f / 255.0f, 0); // #B58900
+		static readonly Color errorColor = new(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f); // #DC322F
+		
 		static readonly Dictionary<string, RegisteredCommand> registeredCommands = new();
-		readonly StringBuilder logScrollback = new();
+		readonly StringBuilder logScrollBack = new();
+		readonly StringBuilder remoteLogScrollBack = new();
 
 		//////////////////////////////////////////////////
 
 		#region MonoBehavior
 		void Awake() {
+			AppendOutput(LogLineType.Normal, STARTING_TEXT);
+			
 			// Listen for Debug.Log calls.
 			Application.logMessageReceived += OnUnityLogMessage;
 			
-			logScrollback.Append(STARTING_TEXT);
 			RegisterCommands();
 			
 			// Add a few special commands
@@ -273,7 +277,7 @@ To view available commands, type 'help'";
 				if (registeredCommands.TryGetValue(options[0], out var command)) {
 					helpText.Append(command.Docs);
 				} else {
-					OutputFormatted("Command not found: " + options[0], errorColor);
+					AppendOutput(LogLineType.Error, "Command not found: " + options[0]);
 				}
 			}
 			return helpText.ToString();
@@ -289,27 +293,35 @@ To view available commands, type 'help'";
 				case LogType.Assert:
 				case LogType.Error:
 				case LogType.Exception:
-					OutputFormatted(message, errorColor);
+					AppendOutput(LogLineType.Error, message);
 					break;
 				case LogType.Warning:
-					OutputFormatted(message, warningColor);
+					AppendOutput(LogLineType.Warning, message);
 					break;
 				case LogType.Log:
-					OutputFormatted(message, logColor);
+					AppendOutput(LogLineType.Normal, message);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(type), type, null);
 			}
 		}
 
-		void OutputFormatted(string message, Color color) {
-			logScrollback.Append(string.Format("<color=#{0:X2}{1:X2}{2:X2}{3:X2}>{4}</color>",
-				Mathf.RoundToInt(color.r * 255),
-				Mathf.RoundToInt(color.g * 255),
-				Mathf.RoundToInt(color.b * 255),
-				Mathf.RoundToInt(color.a * 255),
-				message));
+		void AppendOutput(LogLineType type, string message) {
+			if (type == LogLineType.Normal) {
+				logScrollBack.Append("\n" + message);
+			} else {
+				var color = type == LogLineType.UnityLog ? logColor
+					: type == LogLineType.Warning ? warningColor
+					: errorColor;
+				logScrollBack.Append($"\n<color={ColorToHexString(color)}>{message}</color>");
+			}
+			
+			remoteLogScrollBack.Append($"\n[{type}]{message}[/{type}]");
 			Changed.Invoke(Content);
+		}
+
+		static string ColorToHexString(Color color) {
+			return $"#{Mathf.RoundToInt(color.r * 255):X2}{Mathf.RoundToInt(color.g * 255):X2}{Mathf.RoundToInt(color.b * 255):X2}{Mathf.RoundToInt(color.a * 255):X2}";
 		}
 
 		/// Finds and registers all annotated functions in all assemblies.
