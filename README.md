@@ -21,14 +21,15 @@
 
 # ✨ Features
 * Two styles of console prefabs: window (similar to popular MOBAs) and drawer (similar to classic FPS's).
-* Remotely execute commands with a web-based console served by an embedded server.
+* Remotely execute commands with a web-based console served by an embedded web server.
 * Automatic command registration via function annotation.
 * Automatic command history.  Cycle through previous commands with the up and down arrow keys.
 * Tab autocomplete.
-* Auto-generate command names, or specify them explicitly
+* Auto-generated command names, or specify them explicitly.
 * Displays all Unity log, warning, error and exception messages colored as you'd expect.
 * Bind keys to run commands with the `bind` and `unbind` commands.
-* Supports custom commands with any number of arguments.
+* Supports commands with any number of arguments.
+* `help` commmand and basic commmand documentation system.
 
 # 🏗 Adding Commands
 Console commands are public, static functions annotated with `[ConsoleCommand]`.  Annotated command functions optionally take an array of strings containing the arguments to that command, and also can optionally return a string to be printed to the console as output.
