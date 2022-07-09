@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="#Features">
+    <a href="#-quickstart">
       <img src="/Docs/tilde_title.png">
     </a>
 </p>
