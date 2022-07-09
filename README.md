@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-<img src="/Docs/drawer.gif"> <img src="/Docs/windowed.gif">
+<img src="/Docs/drawer.gif" style="width: 400px"> <img src="/Docs/windowed.gif" style="width: 400px">
 </p>
 
 # ⚡ Quickstart
