@@ -46,7 +46,7 @@ Console commands are public, static functions annotated with `[ConsoleCommand]`.
 [ConsoleCommand] public static string Command4(string[] args) { ... }
 ```
 
-## Command Names
+## Command Name
 The name of a console command is generated from the annotated function's name. You can override this by specifying the `name` argument to the `ConsoleCommand` attribute.
 ```cs
 // Registers the command "damageThePlayer"
@@ -58,7 +58,7 @@ public static void damageThePlayer(string[] args) { ... }
 public static void HealThePlayer(string[] args) { ... }
 ```
 
-## Doc Strings
+## Doc String
 Console commands can also have a documentation (doc) string associated with them to provide a brief explination of what the command does and how to use it. To add a doc string to a command, specify the `docs` argument to the `ConsoleCommand` attribute.
 
 ```cs
@@ -68,8 +68,8 @@ public static void HealThePlayer(string[] args) { ... }
 
 The `help` command shows all the registered commands along with the first line of their doc strings. `help <command>` shows the full command doc string for a specific command.
 
-## Commands With Arguments
-Commands can also consume any number of parameters. Parameters are split by whitespace and passed as an array of strings to the command function. The command then processes each argument as it sees fit.
+## Arguments
+Commands can optionally consume any number of positional arguments. Arguments are split by whitespace and passed as an array of strings to the command function. The command then processes each argument string as it sees fit.
 
 # 📲 Remote Console
 Tilde also provides an embedded web server and web-based console for executing commands remotely.  The default port is `55055`, but it can be specified in the `TildeWebConsoleServer` component.  This enables you to remotely execute commands on mobile devices or consoles where bringing up a keyboard and typing a command is difficult.
