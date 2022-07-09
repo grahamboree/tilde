@@ -72,6 +72,6 @@ The `help` command shows all the registered commands along with the first line o
 Commands can optionally consume any number of positional arguments. Arguments are split by whitespace and passed as an array of strings to the command function. The command then processes each argument string as it sees fit.
 
 # 📲 Remote Console
-Tilde also provides an embedded web server and web-based console for executing commands remotely.  The default port is `55055`, but it can be specified in the `TildeWebConsoleServer` component.  This enables you to remotely execute commands on mobile devices or consoles where bringing up a keyboard and typing a command is difficult.
+Tilde also provides an embedded web server and web-based console for executing commands remotely.  The default port is `55055`, but it can be specified in the `Tilde Web Console Server` component.  This enables you to remotely execute commands on mobile devices or consoles where bringing up a keyboard and typing a command is difficult.
 
-It's highly recommended that you disable the remote console in shipping versions of your game. To do so, simply remove the `TildeWebConsoleServer` component.
+❗️It's highly recommended that you disable the remote console in shipping versions of your game. To do so, simply remove the `Tilde Web Console Server` component.
