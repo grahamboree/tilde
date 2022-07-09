@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-<img src="/Docs/drawer.gif"> <img src="/Docs/windowed.gif">
+<img src="/Docs/drawer.gif" alt="Drawer console prefab"> <img src="/Docs/windowed.gif" alt="Windowed console prefab">
 </p>
 
 # ⚡ Quickstart
