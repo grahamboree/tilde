@@ -8,6 +8,10 @@
     A remote developer console for Unity
 </p>
 
+<p align="center">
+<img src="/Docs/drawer.gif"> <img src="/Docs/windowed.gif">
+</p>
+
 # ⚡ Quickstart
 1. Add the `Tilde Console` and optionally the `Tilde Web Console Server` components to a game object in your scene.
 2. Add either the `Drawer Console` or `Windowed Console` prefab and set the `Console` reference on it.
@@ -25,7 +29,3 @@
 * Displays all Unity log, warning, error and exception messages colored as you'd expect.
 * Bind keys to run commands with the `bind` and `unbind` commands.
 * Supports custom commands with any number of arguments.
-
-<p align="center">
-<img src="/Docs/drawer.gif"> <img src="/Docs/windowed.gif">
-</p>
