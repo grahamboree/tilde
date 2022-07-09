@@ -25,3 +25,7 @@
 * Displays all Unity log, warning, error and exception messages colored as you'd expect.
 * Bind keys to run commands with the `bind` and `unbind` commands.
 * Supports custom commands with any number of arguments.
+
+<p align="center">
+<img src="/Docs/drawer.gif"> <img src="/Docs/windowed.gif">
+</p>
