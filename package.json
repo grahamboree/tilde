@@ -1,0 +1,25 @@
+{
+    "name": "com.grahamboree.tilde",
+    "displayName": "tilde",
+    "documentationUrl": "https://github.com/grahamboree/tilde",
+    "version": "1.0.0",
+    "unity": "2019.4",
+    "description": "A remote developer console for Unity",
+    "keywords": [
+        "console",
+        "remote",
+        "debugging"
+    ],
+    "samples": [
+        {
+            "displayName": "Window and Drawer console demo",
+            "description": "A scene that shows the general tilde setup, and shows off both of the included console types",
+            "path": "Samples~/Demo"
+        }
+    ],
+    "author": {
+        "name" : "Graham Pentheny",
+        "email" : "g@grahamboree.com",
+        "url" : "http://grahamboree.com/"
+    }
+}
