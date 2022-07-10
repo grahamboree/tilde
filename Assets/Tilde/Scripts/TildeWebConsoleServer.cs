@@ -85,7 +85,10 @@ namespace Tilde {
     public sealed class TildeWebConsoleServer : MonoBehaviour {
         [SerializeField] TildeConsole Console;
         [SerializeField] int Port = 55055;
-
+        
+        [SerializeField] TextAsset IndexHTML;
+        [SerializeField] TextAsset LogoPNG;
+        
         static Thread mainThread;
         static string fileRoot;
         static HttpListener listener = new();
@@ -104,54 +107,28 @@ namespace Tilde {
             { "ico", "image/x-icon" },
         };
 
-        static string GetRequestedFilePath(RequestContext context) {
-            return Path.Combine(fileRoot, context.RouteMatch.Groups[1].Value);
-        }
-
         static string GetFileResponseType(string path) {
             string ext = Path.GetExtension(path).ToLower().TrimStart(new[] { '.' });
             return supportedFileTypes.TryGetValue(ext, out string type) ? type : "application/octet-stream";
         }
 
-        static bool WWWFileHandler(RequestContext context, bool download) {
-            string path = GetRequestedFilePath(context);
-            string type = download ? "application/octet-stream" : GetFileResponseType(path);
+        bool LocalFileHandler(RequestContext context, bool download) {
+            string requestedFile = context.RouteMatch.Groups[1].Value;
+            string mimeType = download ? "application/octet-stream" : GetFileResponseType(requestedFile);
 
-            using var request = UnityWebRequest.Get(path);
-            
-            var requestOperation = request.SendWebRequest();
-            while (!requestOperation.isDone) {
-                Thread.Sleep(0);
-            }
-
-            if (!string.IsNullOrEmpty(request.error)) {
-                if (request.error.StartsWith("Couldn't open file")) {
-                    return false;
-                }
-                
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                context.Response.StatusDescription = $"Fatal error:\n{request.error}";
+            if (requestedFile.EndsWith("TildeLogo.png", StringComparison.OrdinalIgnoreCase)) {
+                context.Response.ContentType = mimeType;
+                context.Response.WriteBytes(LogoPNG.bytes);
                 return true;
             }
             
-            context.Response.ContentType = type;
-            if (download) {
-                context.Response.AddHeader("Content-disposition", $"attachment; filename={Path.GetFileName(path)}");
-            }
-            context.Response.WriteBytes(request.downloadHandler.data);
-            return true;
-        }
-
-        static bool LocalFileHandler(RequestContext context, bool download) {
-            string path = GetRequestedFilePath(context);
-            string type = download ? "application/octet-stream" : GetFileResponseType(path);
-
-            if (!File.Exists(path)) {
-                return false;
+            if (requestedFile.EndsWith("index.html", StringComparison.OrdinalIgnoreCase)) {
+                context.Response.ContentType = mimeType;
+                context.Response.WriteBytes(IndexHTML.bytes);
+                return true;
             }
             
-            context.Response.WriteFile(path, type, download);
-            return true;
+            return false;
         }
         
         static void ListenerCallback(IAsyncResult result) {
@@ -245,23 +222,15 @@ namespace Tilde {
             }));
             
             string fileExtensionsPattern = $"({string.Join("|", supportedFileTypes.Keys.ToArray())})";
-            bool needsWWW = fileRoot.Contains("://");
-            Func<RequestContext, bool, bool> callback = needsWWW ? WWWFileHandler : LocalFileHandler;
-            
+
             // download route
-            routes.Add(new Route($@"^/download/(.*\.{fileExtensionsPattern})$", context => {
-                callback(context, true);
-                return true;
-            }) {
-                RunOnMainThread = needsWWW
+            routes.Add(new Route($@"^/download/(.*\.{fileExtensionsPattern})$", context => LocalFileHandler(context, true)) {
+                RunOnMainThread = true
             });
             
             // file route
-            routes.Add(new Route($@"^/(.*\.{fileExtensionsPattern})$", context => {
-                callback(context, false);
-                return true;
-            }) {
-                RunOnMainThread = needsWWW
+            routes.Add(new Route($@"^/(.*\.{fileExtensionsPattern})$", context => LocalFileHandler(context, false)) {
+                RunOnMainThread = true
             });
 
             // Start the server
