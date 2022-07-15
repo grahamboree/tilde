@@ -120,7 +120,7 @@
         return;
       }
 
-      $.get("console/commandHistory?index=" + index, function (data, status) {
+      $.get("console/history?index=" + index, function (data, status) {
         if (data) {
           commandIndex = index;
           $("#input").val(String(data));

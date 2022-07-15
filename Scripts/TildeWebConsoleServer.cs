@@ -1,72 +1,39 @@
 using UnityEngine;
 using System;
-using System.IO;
 using System.Net;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Linq;
 using System.Threading;
 using System.Web;
-using UnityEngine.Networking;
 
 namespace Tilde {
     public static class HttpListenerResponseExtensions {
-        public static void WriteString(this HttpListenerResponse response, string input, string type = "text/plain") {
-            response.StatusCode = (int)HttpStatusCode.OK;
-            response.StatusDescription = "OK";
-
-            if (string.IsNullOrEmpty(input)) {
-                return;
-            }
-            
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(input);
-            response.ContentLength64 = buffer.Length;
-            response.ContentType = type;
-            response.OutputStream.Write(buffer, 0, buffer.Length);
+        public static void WriteString(this HttpListenerResponse response, string input) {
+            response.WriteBytes(System.Text.Encoding.UTF8.GetBytes(input), "text/plain");
         }
 
-        public static void WriteBytes(this HttpListenerResponse response, byte[] bytes) {
+        public static void WriteBytes(this HttpListenerResponse response, byte[] bytes, string type) {
             response.StatusCode = (int)HttpStatusCode.OK;
             response.StatusDescription = "OK";
+            response.ContentType = type;
             response.ContentLength64 = bytes.Length;
             response.OutputStream.Write(bytes, 0, bytes.Length);
-        }
-
-        public static void WriteFile(this HttpListenerResponse response, string path, string type = "application/octet-stream", bool download = false) {
-            using var fileStream = File.OpenRead(path);
-            response.StatusCode = (int)HttpStatusCode.OK;
-            response.StatusDescription = "OK";
-            response.ContentLength64 = fileStream.Length;
-            response.ContentType = type;
-            
-            if (download) {
-                response.AddHeader("Content-disposition", $"attachment; filename={Path.GetFileName(path)}");
-            }
-
-            byte[] buffer = new byte[64 * 1024];
-            int bytesRead;
-            while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0) {
-                response.OutputStream.Write(buffer, 0, bytesRead);
-            }
+            response.OutputStream.Close();
         }
     }
 
     public class Route {
-        public readonly Regex Pattern;
-        public readonly Regex Methods = new Regex(@"(GET|HEAD)");
-        public bool RunOnMainThread = true;
+        public readonly string Path;
         public readonly Func<RequestContext, bool> Callback;
         
         public Route(string pattern, Func<RequestContext, bool> handler) {
-            Pattern = new Regex(pattern, RegexOptions.IgnoreCase);
+            Path = pattern;
             Callback = handler;
         }
     }
 
     public class RequestContext {
-        public Match RouteMatch;
         public readonly string Path;
-
+        
         readonly HttpListenerContext context;
 
         public HttpListenerRequest Request => context.Request;
@@ -74,7 +41,6 @@ namespace Tilde {
 
         public RequestContext(HttpListenerContext ctx) {
             context = ctx;
-            RouteMatch = null;
             Path = HttpUtility.HtmlDecode(context.Request.Url.AbsolutePath);
             if (Path == "/") {
                 Path = "/index.html";
@@ -90,47 +56,10 @@ namespace Tilde {
         [SerializeField] TextAsset LogoPNG;
         
         static Thread mainThread;
-        static string fileRoot;
         static HttpListener listener = new();
         static readonly List<Route> routes = new();
         static readonly Queue<RequestContext> mainThreadRequests = new();
-        static readonly Dictionary<string, string> supportedFileTypes = new() {
-            { "js", "application/javascript" },
-            { "json", "application/json" },
-            { "jpg", "image/jpeg" },
-            { "jpeg", "image/jpeg" },
-            { "gif", "image/gif" },
-            { "png", "image/png" },
-            { "css", "text/css" },
-            { "htm", "text/html" },
-            { "html", "text/html" },
-            { "ico", "image/x-icon" },
-        };
 
-        static string GetFileResponseType(string path) {
-            string ext = Path.GetExtension(path).ToLower().TrimStart(new[] { '.' });
-            return supportedFileTypes.TryGetValue(ext, out string type) ? type : "application/octet-stream";
-        }
-
-        bool LocalFileHandler(RequestContext context, bool download) {
-            string requestedFile = context.RouteMatch.Groups[1].Value;
-            string mimeType = download ? "application/octet-stream" : GetFileResponseType(requestedFile);
-
-            if (requestedFile.EndsWith("TildeLogo.png", StringComparison.OrdinalIgnoreCase)) {
-                context.Response.ContentType = mimeType;
-                context.Response.WriteBytes(LogoPNG.bytes);
-                return true;
-            }
-            
-            if (requestedFile.EndsWith("index.html", StringComparison.OrdinalIgnoreCase)) {
-                context.Response.ContentType = mimeType;
-                context.Response.WriteBytes(IndexHTML.bytes);
-                return true;
-            }
-            
-            return false;
-        }
-        
         static void ListenerCallback(IAsyncResult result) {
             FulfillRequest(new RequestContext(listener.EndGetContext(result)));
             
@@ -141,67 +70,51 @@ namespace Tilde {
         
         static void FulfillRequest(RequestContext context) {
             try {
-                bool wasHandled = false;
-
                 foreach (var route in routes) {
-                    var match = route.Pattern.Match(context.Path);
-                    
                     // Check if this route matches the request
-                    if (!match.Success || !route.Methods.IsMatch(context.Request.HttpMethod)) {
+                    if (context.Path != route.Path || (context.Request.HttpMethod != "GET" && context.Request.HttpMethod != "HEAD")) {
                         continue;
                     }
 
                     // Upgrade to main thread if necessary
-                    if (route.RunOnMainThread && Thread.CurrentThread != mainThread) {
+                    if (Thread.CurrentThread != mainThread) {
                         lock (mainThreadRequests) {
                             mainThreadRequests.Enqueue(context);
                         }
                         return;
                     }
                     
-                    context.RouteMatch = match;
-                    wasHandled = route.Callback(context);
-                    if (wasHandled) {
-                        break;
+                    if (route.Callback(context)) {
+                        return;
                     }
                 }
-
-                if (!wasHandled) {
-                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                    context.Response.StatusDescription = "Not Found";
-                }
+                
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                context.Response.StatusDescription = "Not Found";
             } catch (Exception exception) {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.StatusDescription = $"Fatal error:\n{exception}";
                 Debug.LogException(exception);
             }
-
-            context.Response.OutputStream.Close();
         }
         
         public void Awake() {
             mainThread = Thread.CurrentThread;
-            fileRoot = Path.Combine(Application.streamingAssetsPath, "Tilde");
-            
-            routes.Add(new Route(@"^/test$", context => {
-                context.Response.WriteString("it works!");
-                return true;
-            }));
             
             // Register Routes
-            routes.Add(new Route(@"^/console/out$", context => {
+            routes.Add(new Route("/console/out", context => {
                 context.Response.WriteString(HttpUtility.HtmlEncode(Console.RemoteContent));
                 return true;
             }));
             
-            routes.Add(new Route(@"^/console/run$", context => {
+            routes.Add(new Route("/console/run", context => {
                 Console.RunCommand(Uri.UnescapeDataString(context.Request.QueryString.Get("command")));
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 context.Response.StatusDescription = "OK";
                 return true;
             }));
             
-            routes.Add(new Route(@"^/console/commandHistory$", context => {
+            routes.Add(new Route("/console/history", context => {
                 string index = context.Request.QueryString.Get("index");
                 string previous = null;
                 if (!string.IsNullOrEmpty(index)) {
@@ -211,7 +124,7 @@ namespace Tilde {
                 return true;
             }));
 
-            routes.Add(new Route(@"^/console/complete$", context => {
+            routes.Add(new Route("/console/complete", context => {
                 string partialCommand = context.Request.QueryString.Get("command");
                 string found = null;
                 if (partialCommand != null) {
@@ -221,17 +134,15 @@ namespace Tilde {
                 return true;
             }));
             
-            string fileExtensionsPattern = $"({string.Join("|", supportedFileTypes.Keys.ToArray())})";
-
-            // download route
-            routes.Add(new Route($@"^/download/(.*\.{fileExtensionsPattern})$", context => LocalFileHandler(context, true)) {
-                RunOnMainThread = true
-            });
+            routes.Add(new Route("/TildeLogo.png", context => {
+                context.Response.WriteBytes(LogoPNG.bytes, "image/png");
+                return true;
+            }));
             
-            // file route
-            routes.Add(new Route($@"^/(.*\.{fileExtensionsPattern})$", context => LocalFileHandler(context, false)) {
-                RunOnMainThread = true
-            });
+            routes.Add(new Route("/index.html", context => {
+                context.Response.WriteBytes(IndexHTML.bytes, "text/html");
+                return true;
+            }));
 
             // Start the server
             Debug.Log("Starting Tilde Server on port : " + Port);
@@ -266,13 +177,8 @@ namespace Tilde {
         }
 
         void Reset() {
-            if (Console != null) {
-                return;
-            }
-            
-            var existingConsole = FindObjectOfType<TildeConsole>();
-            if (existingConsole != null) {
-                Console = existingConsole;
+            if (Console == null) {
+                Console = FindObjectOfType<TildeConsole>();
             }
         }
     }
