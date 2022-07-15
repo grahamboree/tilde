@@ -1,6 +1,6 @@
 <p align="center">
     <a href="#-quickstart">
-      <img src="/Docs/tilde_title.png">
+      <img src="/Docs~/tilde_title.png">
     </a>
 </p>
 
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-<img src="/Docs/drawer.gif" alt="Drawer console prefab"> <img src="/Docs/windowed.gif" alt="Windowed console prefab">
+<img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
 </p>
 
 # ⚡ Quickstart
