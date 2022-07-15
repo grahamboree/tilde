@@ -27,6 +27,12 @@ namespace Tilde {
 		//////////////////////////////////////////////////
 
 		#region MonoBehaviour
+		void Reset() {
+			if (console == null) {
+				console = FindObjectOfType<TildeConsole>();
+			}
+		}
+		
 		void Awake() {
 			consoleWindowRectTransform = consoleWindow.GetComponent<RectTransform>();
 			consoleWindowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);

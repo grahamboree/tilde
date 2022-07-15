@@ -17,6 +17,12 @@ namespace Tilde {
 		//////////////////////////////////////////////////
 		
 		#region MonoBehaviour
+		void Reset() {
+			if (console == null) {
+				console = FindObjectOfType<TildeConsole>();
+			}
+		}
+		
 		void Awake() {
 			console.Changed.AddListener(UpdateLogContent);
 		}
