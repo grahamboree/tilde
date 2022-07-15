@@ -2,7 +2,6 @@ using UnityEngine;
 using System;
 using System.Net;
 using System.Collections.Generic;
-using System.Threading;
 using System.Web;
 
 namespace Tilde {
@@ -45,47 +44,41 @@ namespace Tilde {
         [SerializeField] TextAsset IndexHTML;
         [SerializeField] TextAsset LogoPNG;
         
-        static Thread mainThread;
         static HttpListener listener = new();
         static Dictionary<string, Action<RequestContext>> routes;
-        static readonly Queue<RequestContext> mainThreadRequests = new();
+        static readonly Queue<Action> responseQueue = new();
 
+        /// HttpListener callback.  This happens on a background thread, so we need to queue response generation for the main thread.
         static void ListenerCallback(IAsyncResult result) {
-            FulfillRequest(new RequestContext(listener.EndGetContext(result)));
+            var context = new RequestContext(listener.EndGetContext(result));
+            
+            try {
+                if (context.Request.HttpMethod is "GET" or "HEAD" && routes.TryGetValue(context.Path, out var handler)) {
+                    // Queue a closure for main thread execution
+                    lock (responseQueue) {
+                        responseQueue.Enqueue(() => {
+                            handler(context);
+                            context.Response.Close();
+                        });
+                    }
+                } else {
+                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    context.Response.StatusDescription = "Not Found";
+                    context.Response.Close();
+                }
+            } catch (Exception exception) {
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                context.Response.StatusDescription = $"Fatal error:\n{exception}";
+                context.Response.Close();
+                Debug.LogException(exception);
+            }
             
             if (listener.IsListening) {
                 listener.BeginGetContext(ListenerCallback, null);
             }
         }
-        
-        static void FulfillRequest(RequestContext context) {
-            try {
-                if (context.Request.HttpMethod is "GET" or "HEAD" && routes.TryGetValue(context.Path, out var handler)) {
-                    // Upgrade to main thread if necessary
-                    if (Thread.CurrentThread != mainThread) {
-                        lock (mainThreadRequests) {
-                            mainThreadRequests.Enqueue(context);
-                        }
-                        return;
-                    }
 
-                    handler(context);
-                    context.Response.Close();
-                    return;
-                }
-                
-                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                context.Response.StatusDescription = "Not Found";
-            } catch (Exception exception) {
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                context.Response.StatusDescription = $"Fatal error:\n{exception}";
-                Debug.LogException(exception);
-            }
-        }
-        
         public void Awake() {
-            mainThread = Thread.CurrentThread;
-            
             // Register Routes
             routes = new Dictionary<string, Action<RequestContext>> {
                 ["/index.html"] = context => context.Response.WriteBytes(IndexHTML.bytes, "text/html"),
@@ -131,14 +124,11 @@ namespace Tilde {
         }
         
         void LateUpdate() {
-            RequestContext context;
-            lock (mainThreadRequests) {
-                if (mainThreadRequests.Count == 0) {
-                    return;
+            lock (responseQueue) {
+                while (responseQueue.Count != 0) {
+                    responseQueue.Dequeue()();
                 }
-                context = mainThreadRequests.Dequeue();
             }
-            FulfillRequest(context);
         }
         
         void OnDestroy() {
