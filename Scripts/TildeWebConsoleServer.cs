@@ -70,6 +70,7 @@ namespace Tilde {
                     }
 
                     handler(context);
+                    context.Response.Close();
                     return;
                 }
                 
