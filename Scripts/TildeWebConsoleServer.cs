@@ -23,9 +23,9 @@ namespace Tilde {
 
     public class Route {
         public readonly string Path;
-        public readonly Func<RequestContext, bool> Callback;
+        public readonly Action<RequestContext> Callback;
         
-        public Route(string pattern, Func<RequestContext, bool> handler) {
+        public Route(string pattern, Action<RequestContext> handler) {
             Path = pattern;
             Callback = handler;
         }
@@ -83,10 +83,9 @@ namespace Tilde {
                         }
                         return;
                     }
-                    
-                    if (route.Callback(context)) {
-                        return;
-                    }
+
+                    route.Callback(context);
+                    return;
                 }
                 
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -104,14 +103,12 @@ namespace Tilde {
             // Register Routes
             routes.Add(new Route("/console/out", context => {
                 context.Response.WriteString(HttpUtility.HtmlEncode(Console.RemoteContent));
-                return true;
             }));
             
             routes.Add(new Route("/console/run", context => {
                 Console.RunCommand(Uri.UnescapeDataString(context.Request.QueryString.Get("command")));
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 context.Response.StatusDescription = "OK";
-                return true;
             }));
             
             routes.Add(new Route("/console/history", context => {
@@ -121,7 +118,6 @@ namespace Tilde {
                     previous = Console.History[int.Parse(index)];
                 }
                 context.Response.WriteString(previous);
-                return true;
             }));
 
             routes.Add(new Route("/console/complete", context => {
@@ -131,17 +127,14 @@ namespace Tilde {
                     found = Console.Completer.Complete(partialCommand);
                 }
                 context.Response.WriteString(found);
-                return true;
             }));
             
             routes.Add(new Route("/TildeLogo.png", context => {
                 context.Response.WriteBytes(LogoPNG.bytes, "image/png");
-                return true;
             }));
             
             routes.Add(new Route("/index.html", context => {
                 context.Response.WriteBytes(IndexHTML.bytes, "text/html");
-                return true;
             }));
 
             // Start the server
