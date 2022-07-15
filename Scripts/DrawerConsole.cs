@@ -34,6 +34,10 @@ namespace Tilde {
 		}
 		
 		void Awake() {
+			if (console == null) {
+				console = FindObjectOfType<TildeConsole>();
+			}
+			
 			consoleWindowRectTransform = consoleWindow.GetComponent<RectTransform>();
 			consoleWindowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);

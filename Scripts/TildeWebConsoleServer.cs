@@ -78,7 +78,17 @@ namespace Tilde {
             }
         }
 
+        void Reset() {
+            if (Console == null) {
+                Console = FindObjectOfType<TildeConsole>();
+            }
+        }
+
         public void Awake() {
+            if (Console == null) {
+                Console = FindObjectOfType<TildeConsole>();
+            }
+            
             // Register Routes
             routes = new Dictionary<string, Action<RequestContext>> {
                 ["/index.html"] = context => context.Response.WriteBytes(IndexHTML.bytes, "text/html"),
@@ -134,12 +144,6 @@ namespace Tilde {
         void OnDestroy() {
             listener.Close();
             listener = null;
-        }
-
-        void Reset() {
-            if (Console == null) {
-                Console = FindObjectOfType<TildeConsole>();
-            }
         }
     }
 }

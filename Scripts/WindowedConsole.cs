@@ -24,6 +24,10 @@ namespace Tilde {
 		}
 		
 		void Awake() {
+			if (console == null) {
+				console = FindObjectOfType<TildeConsole>();
+			}
+			
 			console.Changed.AddListener(UpdateLogContent);
 		}
 
