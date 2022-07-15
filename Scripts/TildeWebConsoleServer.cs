@@ -21,16 +21,6 @@ namespace Tilde {
         }
     }
 
-    public class Route {
-        public readonly string Path;
-        public readonly Action<RequestContext> Callback;
-        
-        public Route(string pattern, Action<RequestContext> handler) {
-            Path = pattern;
-            Callback = handler;
-        }
-    }
-
     public class RequestContext {
         public readonly string Path;
         
@@ -57,7 +47,7 @@ namespace Tilde {
         
         static Thread mainThread;
         static HttpListener listener = new();
-        static readonly List<Route> routes = new();
+        static Dictionary<string, Action<RequestContext>> routes;
         static readonly Queue<RequestContext> mainThreadRequests = new();
 
         static void ListenerCallback(IAsyncResult result) {
@@ -70,12 +60,7 @@ namespace Tilde {
         
         static void FulfillRequest(RequestContext context) {
             try {
-                foreach (var route in routes) {
-                    // Check if this route matches the request
-                    if (context.Path != route.Path || (context.Request.HttpMethod != "GET" && context.Request.HttpMethod != "HEAD")) {
-                        continue;
-                    }
-
+                if (context.Request.HttpMethod is "GET" or "HEAD" && routes.TryGetValue(context.Path, out var handler)) {
                     // Upgrade to main thread if necessary
                     if (Thread.CurrentThread != mainThread) {
                         lock (mainThreadRequests) {
@@ -84,7 +69,7 @@ namespace Tilde {
                         return;
                     }
 
-                    route.Callback(context);
+                    handler(context);
                     return;
                 }
                 
@@ -101,41 +86,32 @@ namespace Tilde {
             mainThread = Thread.CurrentThread;
             
             // Register Routes
-            routes.Add(new Route("/console/out", context => {
-                context.Response.WriteString(HttpUtility.HtmlEncode(Console.RemoteContent));
-            }));
-            
-            routes.Add(new Route("/console/run", context => {
-                Console.RunCommand(Uri.UnescapeDataString(context.Request.QueryString.Get("command")));
-                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                context.Response.StatusDescription = "OK";
-            }));
-            
-            routes.Add(new Route("/console/history", context => {
-                string index = context.Request.QueryString.Get("index");
-                string previous = null;
-                if (!string.IsNullOrEmpty(index)) {
-                    previous = Console.History[int.Parse(index)];
+            routes = new Dictionary<string, Action<RequestContext>> {
+                ["/index.html"] = context => context.Response.WriteBytes(IndexHTML.bytes, "text/html"),
+                ["/TildeLogo.png"] = context => context.Response.WriteBytes(LogoPNG.bytes, "image/png"),
+                ["/console/out"] = context => context.Response.WriteString(HttpUtility.HtmlEncode(Console.RemoteContent)),
+                ["/console/run"] = context => {
+                    Console.RunCommand(Uri.UnescapeDataString(context.Request.QueryString.Get("command")));
+                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                    context.Response.StatusDescription = "OK";
+                },
+                ["/console/history"] = context => {
+                    string index = context.Request.QueryString.Get("index");
+                    string previous = null;
+                    if (!string.IsNullOrEmpty(index)) {
+                        previous = Console.History[int.Parse(index)];
+                    }
+                    context.Response.WriteString(previous);
+                },
+                ["/console/complete"] = context => {
+                    string partialCommand = context.Request.QueryString.Get("command");
+                    string found = null;
+                    if (partialCommand != null) {
+                        found = Console.Completer.Complete(partialCommand);
+                    }
+                    context.Response.WriteString(found);
                 }
-                context.Response.WriteString(previous);
-            }));
-
-            routes.Add(new Route("/console/complete", context => {
-                string partialCommand = context.Request.QueryString.Get("command");
-                string found = null;
-                if (partialCommand != null) {
-                    found = Console.Completer.Complete(partialCommand);
-                }
-                context.Response.WriteString(found);
-            }));
-            
-            routes.Add(new Route("/TildeLogo.png", context => {
-                context.Response.WriteBytes(LogoPNG.bytes, "image/png");
-            }));
-            
-            routes.Add(new Route("/index.html", context => {
-                context.Response.WriteBytes(IndexHTML.bytes, "text/html");
-            }));
+            };
 
             // Start the server
             Debug.Log("Starting Tilde Server on port : " + Port);
