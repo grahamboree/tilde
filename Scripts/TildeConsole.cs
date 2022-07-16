@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using UnityEngine.Events;
 
 namespace Tilde {
 	public enum LogLineType {
@@ -65,7 +64,7 @@ namespace Tilde {
 		/// </summary>
 		/// <param name="message">The text to print.</param>
 		public void OutputStringToConsole(string message) {
-			AppendOutput(LogLineType.Normal, message);
+			AppendOutput(message, LogLineType.Normal);
 		}
 
 		/// <summary>
@@ -73,7 +72,7 @@ namespace Tilde {
 		/// </summary>
 		/// <param name="command">The complete command string, including any arguments.</param>
 		public void RunCommand(string command) {
-			AppendOutput(LogLineType.Normal, "> " + command);
+			AppendOutput("> " + command, LogLineType.Normal);
 			
 			if (string.IsNullOrEmpty(command)) {
 				return;
@@ -82,9 +81,9 @@ namespace Tilde {
 			History.Add(command);
 
 			try {
-				AppendOutput(LogLineType.Normal, SilentlyRunCommand(command));
+				AppendOutput(SilentlyRunCommand(command), LogLineType.Normal);
 			} catch (Exception e) {
-				AppendOutput(LogLineType.Error, e.Message);
+				AppendOutput(e.Message, LogLineType.Error);
 			}
 		}
 
@@ -166,7 +165,7 @@ To view available commands, type 'help'";
 
 		#region MonoBehavior
 		void Awake() {
-			AppendOutput(LogLineType.Normal, STARTING_TEXT);
+			AppendOutput(STARTING_TEXT, LogLineType.Normal);
 			
 			// Listen for Debug.Log calls.
 			Application.logMessageReceived += OnUnityLogMessage;
@@ -269,7 +268,7 @@ To view available commands, type 'help'";
 				if (registeredCommands.TryGetValue(options[0], out var command)) {
 					helpText.Append(command.Docs);
 				} else {
-					AppendOutput(LogLineType.Error, "Command not found: " + options[0]);
+					AppendOutput("Command not found: " + options[0], LogLineType.Error);
 				}
 			}
 			return helpText.ToString();
@@ -285,20 +284,20 @@ To view available commands, type 'help'";
 				case LogType.Assert:
 				case LogType.Error:
 				case LogType.Exception:
-					AppendOutput(LogLineType.Error, message);
+					AppendOutput(message, LogLineType.Error);
 					break;
 				case LogType.Warning:
-					AppendOutput(LogLineType.Warning, message);
+					AppendOutput(message, LogLineType.Warning);
 					break;
 				case LogType.Log:
-					AppendOutput(LogLineType.Normal, message);
+					AppendOutput(message, LogLineType.Normal);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(type), type, null);
 			}
 		}
 
-		void AppendOutput(LogLineType type, string message) {
+		void AppendOutput(string message, LogLineType type) {
 			Scrollback.Append(message, type);
 			Changed?.Invoke(Content);
 		}
