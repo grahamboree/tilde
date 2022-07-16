@@ -8,19 +8,21 @@
     A remote developer console for Unity<br>
 </p>
 
-<p align="center">
-<img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
-</p>
-
 ---
 [![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
 
 # ⚡ Quickstart
-1. Add the `Tilde Console` and optionally the `Tilde Web Console Server` components to a game object in your scene.
-2. Add either the `Drawer Console` or `Windowed Console` prefab and set the `Console` reference on it.
+1. In the package manager, select "Add package from git URL..." and add tilde using the url `https://github.com/grahamboree/tilde`
+2. Add the `Prefabs/Tilde` prefab to your scene.
+2. Add either the `Prefabs/Drawer Console` or `Prefabs/Windowed Console` prefab to your scene.
 3. Start the game and press the tilde/backtick key to open the console.
 4. Run `help` to list available commands.
-5. Open `localhost:55055` in a web browser to remotely execute commands.
+5. Open `localhost:55055` in a web browser to access the remote console.
+
+# 🖼 Screenshots
+<p align="center">
+<img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
+</p>
 
 # ✨ Features
 * Two styles of console prefabs: window (similar to popular MOBAs) and drawer (similar to classic FPS's).
