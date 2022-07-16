@@ -41,7 +41,7 @@ namespace Tilde {
 			consoleWindowRectTransform = consoleWindow.GetComponent<RectTransform>();
 			consoleWindowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
 			SetConsoleY(height);
-			console.Changed.AddListener(UpdateLogContent);
+			console.Changed += UpdateLogContent;
 		}
 
 		void OnEnable() {
@@ -118,7 +118,7 @@ namespace Tilde {
 		}
 
 		void OnDestroy() {
-			console.Changed.RemoveListener(UpdateLogContent);
+			console.Changed -= UpdateLogContent;
 		}
 		#endregion
 

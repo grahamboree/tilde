@@ -17,9 +17,6 @@ namespace Tilde {
 	
 	public class TildeConsole : MonoBehaviour {
 		#region Types
-		/// Callback type for Console.Changed events.
-		public class OnChangeCallback : UnityEvent<string> {}
-
 		// Registering commands
 		delegate string CommandAction(params string[] args);
 		delegate void SilentCommandAction(params string[] args);
@@ -53,7 +50,7 @@ namespace Tilde {
 		public readonly BoundCommands KeyBindings = new();
 
 		/// Occurs when the log contents have changed, most often occurring when a command is executed.
-		public readonly OnChangeCallback Changed = new();
+		public event Action<string> Changed;
 
 		/// The full console log string.
 		public string Content => Scrollback.ToUIString();
@@ -303,7 +300,7 @@ To view available commands, type 'help'";
 
 		void AppendOutput(LogLineType type, string message) {
 			Scrollback.Append(message, type);
-			Changed.Invoke(Content);
+			Changed?.Invoke(Content);
 		}
 
 		/// Finds and registers all annotated functions in all assemblies.

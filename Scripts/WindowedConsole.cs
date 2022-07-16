@@ -28,7 +28,7 @@ namespace Tilde {
 				console = FindObjectOfType<TildeConsole>();
 			}
 			
-			console.Changed.AddListener(UpdateLogContent);
+			console.Changed += UpdateLogContent;
 		}
 
 		void Update() {
@@ -105,7 +105,7 @@ namespace Tilde {
 		}
 
 		void OnDestroy() {
-			console.Changed.RemoveListener(UpdateLogContent);
+			console.Changed -= UpdateLogContent;
         }
 		#endregion
 
