@@ -8,6 +8,13 @@ using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace Tilde {
+	public enum LogLineType {
+		Normal,
+		UnityLog,
+		Warning,
+		Error
+	}
+	
 	public class TildeConsole : MonoBehaviour {
 		#region Types
 		/// Callback type for Console.Changed events.
@@ -23,13 +30,6 @@ namespace Tilde {
 			public string Docs;
 			public CommandAction Action;
 			public Autocompleter[] Completers;
-		}
-
-		enum LogLineType {
-			Normal,
-			UnityLog,
-			Warning,
-			Error
 		}
 
 		class UnknownCommandException : Exception {
@@ -56,10 +56,10 @@ namespace Tilde {
 		public readonly OnChangeCallback Changed = new();
 
 		/// The full console log string.
-		public string Content => logScrollBack.ToString();
+		public string Content => Scrollback.ToUIString();
 		
 		/// The full console log string formatted for the remote web console.
-		public string RemoteContent => remoteLogScrollBack.ToString();
+		public string RemoteContent => Scrollback.ToRemoteString();
 		
 		//////////////////////////////////////////////////
 
@@ -162,14 +162,9 @@ namespace Tilde {
 
 To view available commands, type 'help'";
 		
-		static readonly Color logColor = new(88.0f / 255.0f, 110.0f / 255.0f, 117.0f / 255.0f); // #586ED7
-		static readonly Color warningColor = new(181.0f / 255.0f, 137.0f / 255.0f, 0); // #B58900
-		static readonly Color errorColor = new(220.0f / 255.0f, 50.0f / 255.0f, 47.0f / 255.0f); // #DC322F
-		
 		static readonly Dictionary<string, RegisteredCommand> registeredCommands = new();
-		readonly StringBuilder logScrollBack = new();
-		readonly StringBuilder remoteLogScrollBack = new();
-
+		Scrollback Scrollback = new();
+		
 		//////////////////////////////////////////////////
 
 		#region MonoBehavior
@@ -307,21 +302,8 @@ To view available commands, type 'help'";
 		}
 
 		void AppendOutput(LogLineType type, string message) {
-			if (type == LogLineType.Normal) {
-				logScrollBack.Append("\n" + message);
-			} else {
-				var color = type == LogLineType.UnityLog ? logColor
-					: type == LogLineType.Warning ? warningColor
-					: errorColor;
-				logScrollBack.Append($"\n<color={ColorToHexString(color)}>{message}</color>");
-			}
-			
-			remoteLogScrollBack.Append($"\n[{type}]{message}[/{type}]");
+			Scrollback.Append(message, type);
 			Changed.Invoke(Content);
-		}
-
-		static string ColorToHexString(Color color) {
-			return $"#{Mathf.RoundToInt(color.r * 255):X2}{Mathf.RoundToInt(color.g * 255):X2}{Mathf.RoundToInt(color.b * 255):X2}{Mathf.RoundToInt(color.a * 255):X2}";
 		}
 
 		/// Finds and registers all annotated functions in all assemblies.
