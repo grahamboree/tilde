@@ -8,12 +8,12 @@
     A remote developer console for Unity<br>
 </p>
 
----
-[![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
-
 <p align="center">
 <img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
 </p>
+
+---
+[![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
 
 # ⚡ Quickstart
 1. Add the `Tilde Console` and optionally the `Tilde Web Console Server` components to a game object in your scene.
