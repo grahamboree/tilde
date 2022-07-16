@@ -5,11 +5,13 @@
 </p>
 
 <p align="center">
-    A remote developer console for Unity<br>
+    A remote developer console for Unity
 </p>
 
 ---
 [![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
+
+[[HTML5 DEMO]](https://grahamboree.github.io/tilde/)
 
 # ⚡ Quickstart
 1. In the package manager, select "Add package from git URL..." and add tilde using the url `https://github.com/grahamboree/tilde`
@@ -19,7 +21,7 @@
 4. Run `help` to list available commands.
 5. Open `localhost:55055` in a web browser to access the remote console.
 
-# 🖼 Screenshots
+# 📸 Screenshots
 <p align="center">
 <img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
 </p>
