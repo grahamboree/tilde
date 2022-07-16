@@ -1,5 +1,4 @@
 using System.Text;
-using UnityEngine;
 
 namespace Tilde {
     public class Scrollback {
@@ -7,28 +6,44 @@ namespace Tilde {
         const string WARNING_COLOR = "#B58900";
         const string ERROR_COLOR = "#DC322F";
 
-        readonly StringBuilder UIScrollBack = new();
-        readonly StringBuilder RemoteScrollBack = new();
+        string uiScrollBackCache;
+        bool uiScrollBackCacheIsDirty = true;
+        readonly StringBuilder uiScrollBack = new();
+        
+        string remoteScrollBackCache;
+        bool remoteScrollBackCacheIsDirty = true;
+        readonly StringBuilder remoteScrollBack = new();
 
         public void Append(string message, LogLineType messageType) {
             if (messageType == LogLineType.Normal) {
-                UIScrollBack.Append("\n" + message);
+                uiScrollBack.Append("\n" + message);
             } else {
                 string color = messageType == LogLineType.UnityLog ? LOG_COLOR
                     : messageType == LogLineType.Warning ? WARNING_COLOR
                     : ERROR_COLOR;
-                UIScrollBack.Append($"\n<color={color}>{message}</color>");
+                uiScrollBack.Append($"\n<color={color}>{message}</color>");
             }
 			
-            RemoteScrollBack.Append($"\n[{messageType}]{message}[/{messageType}]");
+            remoteScrollBack.Append($"\n[{messageType}]{message}[/{messageType}]");
+
+            uiScrollBackCacheIsDirty = true;
+            remoteScrollBackCacheIsDirty = true;
         }
 
         public string ToUIString() {
-            return UIScrollBack.ToString();
+            if (uiScrollBackCacheIsDirty) {
+                uiScrollBackCache = uiScrollBack.ToString();
+                uiScrollBackCacheIsDirty = false;
+            }
+            return uiScrollBackCache;
         }
 
         public string ToRemoteString() {
-            return RemoteScrollBack.ToString();
+            if (remoteScrollBackCacheIsDirty) {
+                remoteScrollBackCache = uiScrollBack.ToString();
+                remoteScrollBackCacheIsDirty = false;
+            }
+            return remoteScrollBackCache;
         }
     }
 }
