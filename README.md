@@ -5,8 +5,11 @@
 </p>
 
 <p align="center">
-    A remote developer console for Unity
+    A remote developer console for Unity<br>
 </p>
+
+---
+[![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
 
 <p align="center">
 <img src="/Docs~/drawer.gif" alt="Drawer console prefab"> <img src="/Docs~/windowed.gif" alt="Windowed console prefab">
