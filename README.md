@@ -8,11 +8,13 @@
     A remote developer console for Unity
 </p>
 
----
-[![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
-[![openupm](https://img.shields.io/npm/v/com.grahamboree.tilde?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.grahamboree.tilde/)[![CodeFactor](https://www.codefactor.io/repository/github/grahamboree/tilde/badge)](https://www.codefactor.io/repository/github/grahamboree/tilde)
-
-[[HTML5 DEMO]](https://grahamboree.github.io/tilde/)
+<p align="center">
+    <a href="https://grahamboree.github.io/tilde/" title="HTML5 Demo"><img src="https://img.shields.io/badge/Demo-HTML5-red" /></a>
+    <br />
+    <a href="https://github.com/grahamboree/tilde/blob/main/LICENSE.md" title="License"><img src="https://img.shields.io/github/license/grahamboree/tilde.svg" /></a>
+    <a href="https://openupm.com/packages/com.grahamboree.tilde/" title="openupm"><img src="https://img.shields.io/npm/v/com.grahamboree.tilde?label=openupm&registry_uri=https://package.openupm.com" /></a>
+    <a href="https://www.codefactor.io/repository/github/grahamboree/tilde" title="CodeFactor"><img src="https://www.codefactor.io/repository/github/grahamboree/tilde/badge" /></a>
+</p>
 
 # ⚡ Quickstart
 1. In the package manager, select "Add package from git URL..." and add tilde using the url `https://github.com/grahamboree/tilde`
