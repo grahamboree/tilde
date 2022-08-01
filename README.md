@@ -10,7 +10,7 @@
 
 ---
 [![](https://img.shields.io/github/license/grahamboree/tilde.svg)](https://github.com/grahamboree/tilde/blob/master/LICENSE.txt)
-[![openupm](https://img.shields.io/npm/v/com.grahamboree.tilde?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.grahamboree.tilde/)
+[![openupm](https://img.shields.io/npm/v/com.grahamboree.tilde?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.grahamboree.tilde/)[![CodeFactor](https://www.codefactor.io/repository/github/grahamboree/tilde/badge)](https://www.codefactor.io/repository/github/grahamboree/tilde)
 
 [[HTML5 DEMO]](https://grahamboree.github.io/tilde/)
 
