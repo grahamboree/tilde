@@ -6,10 +6,12 @@ namespace Tilde {
         const string WARNING_COLOR = "#B58900";
         const string ERROR_COLOR = "#DC322F";
 
+        const int MAX_SCROLLBACK_CHARS = 15000;
+
         string uiScrollBackCache;
         bool uiScrollBackCacheIsDirty = true;
         readonly StringBuilder uiScrollBack = new();
-        
+
         string remoteScrollBackCache;
         bool remoteScrollBackCacheIsDirty = true;
         readonly StringBuilder remoteScrollBack = new();
@@ -28,6 +30,8 @@ namespace Tilde {
 
             uiScrollBackCacheIsDirty = true;
             remoteScrollBackCacheIsDirty = true;
+            
+            TrimScrollbacks();
         }
 
         public string ToUIString() {
@@ -44,6 +48,18 @@ namespace Tilde {
                 remoteScrollBackCacheIsDirty = false;
             }
             return remoteScrollBackCache;
+        }
+
+        void TrimScrollbacks() {
+            int uiDelta = uiScrollBack.Length - MAX_SCROLLBACK_CHARS;
+            if (uiDelta > 0) {
+                uiScrollBack.Remove(0, uiDelta);
+            }
+            
+            int remoteDelta = remoteScrollBack.Length - MAX_SCROLLBACK_CHARS;
+            if (remoteDelta > 0) {
+                remoteScrollBack.Remove(0, remoteDelta);
+            }
         }
     }
 }
