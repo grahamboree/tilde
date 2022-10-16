@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 
 
+## [v1.0.3]
+
+### Fixed
+
+- Fixed package json version number
+
 ## [v1.0.2]
 
 ### Fixed
@@ -40,7 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial version
 
-[unreleased]: https://github.com/grahamboree/tilde/compare/v1.0.2...HEAD
+[unreleased]: https://github.com/grahamboree/tilde/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/grahamboree/tilde/releases/tag/v1.0.3
 [1.0.2]: https://github.com/grahamboree/tilde/releases/tag/v1.0.2
 [1.0.1]: https://github.com/grahamboree/tilde/releases/tag/v1.0.1
 [1.0.0]: https://github.com/grahamboree/tilde/releases/tag/v1.0.0
